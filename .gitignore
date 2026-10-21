@@ -1,0 +1,9 @@
+# Plan, Ideen, Notizen – eigenes Repo bzw. nur lokal
+docs/
+
+# Projektregeln für Claude – nur lokal (Kopie in docs/claude/)
+CLAUDE.md
+.claude/
+
+# Gepackte Mod-Zips
+dist/

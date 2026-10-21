@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 2026-10-21
+  Info:
+    - First skeleton: checks the UTL add-on API. Nothing is coupled yet.
