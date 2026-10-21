@@ -7,10 +7,10 @@ local Geometry = require("scripts.coupling.geometry")
 local Crawl = {}
 
 --- Neuen Vorgang anlegen: `head` = Kopfwagen des Zuges, `target` = nächster Wagen vor ihm,
---- (fx, fy) = Fahrtrichtung.
-function Crawl.start(head, target, fx, fy)
+--- (fx, fy) = Fahrtrichtung, `task` = Rangierauftrag (nil am Wagenbahnhof).
+function Crawl.start(head, target, fx, fy, task)
   storage.crawls[#storage.crawls + 1] = {
-    head = head, target = target, dir = Geometry.ahead(head, fx, fy),
+    head = head, target = target, dir = Geometry.ahead(head, fx, fy), task = task,
     ids = Couple.announce(head, target), started = game.tick, still = 0,
   }
 end
@@ -47,7 +47,7 @@ local function step(c)
   return nil
 end
 
---- Alle offenen Vorgänge einen Schritt weiter. Ruft `done(train, coupled)` für jeden fertigen.
+--- Alle offenen Vorgänge einen Schritt weiter. Ruft `done(train, coupled, vorgang)` für jeden fertigen.
 function Crawl.run(done)
   local crawls = storage.crawls
   for i = #crawls, 1, -1 do
@@ -55,7 +55,7 @@ function Crawl.run(done)
     local result = step(c)
     if result ~= nil then
       table.remove(crawls, i)
-      if result then done(result, c.target.valid and c.target.train == result) end
+      if result then done(result, c.target.valid and c.target.train == result, c) end
     end
   end
 end

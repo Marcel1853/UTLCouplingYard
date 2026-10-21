@@ -5,6 +5,10 @@ local Registry = require("scripts.stations.registry")
 local Yard = require("scripts.yard.yard")
 local Worker = require("scripts.yard.worker")
 local Depot = require("scripts.shunting.depot")
+local Groups = require("scripts.shunting.groups")
+local Shunter = require("scripts.shunting.shunter")
+
+Groups.on_ready = Shunter.request
 
 local Setup = {}
 
@@ -15,6 +19,11 @@ function Setup.storage()
   storage.crawls = storage.crawls or {}     -- laufendes Heranschieben
   storage.shunters = storage.shunters or {} -- Zug-ID → Rangierdepot (unit), taugliche Rangierloks
   storage.warned = storage.warned or {}     -- Zug-ID → schon gewarnt (fährt nur in eine Richtung)
+  storage.stops = storage.stops or {}       -- unit → Haltestelle (LuaEntity) der Stationen dieses Mods
+  storage.free = storage.free or {}         -- Zug-ID → Rangierdepot (unit), frei für einen Auftrag
+  storage.tasks = storage.tasks or {}       -- Rangieraufträge ohne Lok: { group, to }
+  storage.jobs = storage.jobs or {}         -- UTL-Auftrags-ID → Rangierauftrag
+  storage.waiting = storage.waiting or {}   -- Wagenverbände, die auf „leer“/„voll“ warten
 end
 
 local function role(name, extra)
@@ -45,7 +54,13 @@ function Setup.listen()
   script.on_event(ids.on_station_changed, Registry.update)
   script.on_event(ids.on_station_removed, Registry.remove)
   script.on_event(ids.on_train_arrived, function(event)
+    if Shunter.arrived(event) then return end
     if Yard.arrived(event) then Worker.wake() end
+  end)
+  script.on_event(ids.on_job_finished, function(event) ---@param event table
+    if event.mod ~= Const.MOD then return end
+    Shunter.job_finished(event)
+    Worker.wake()
   end)
   script.on_event(ids.on_train_idle, Depot.idle)
 end

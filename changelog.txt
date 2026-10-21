@@ -6,5 +6,6 @@ Date: 2026-10-21
     - Wagon yard: trains leave all wagons behind their locomotives and pick up the wagons waiting ahead of them, then carry on with their schedule. Mode per station: leave and pick up, only leave, only pick up.
     - Every coupling is announced to UTL, so deliveries and schedules survive it.
     - Shunting depot checks that shunting locomotives drive both ways.
+    - Shunting: a wagon yard can name a target wagon yard (right away, when empty or when full). A free shunting locomotive fetches the wagons left there and brings them to the target, using a turnaround if needed.
   Info:
     - No timers while nothing is being shunted.

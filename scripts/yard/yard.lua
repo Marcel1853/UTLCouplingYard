@@ -6,6 +6,7 @@ local Registry = require("scripts.stations.registry")
 local Couple = require("scripts.coupling.couple")
 local Crawl = require("scripts.coupling.crawl")
 local Geometry = require("scripts.coupling.geometry")
+local Groups = require("scripts.shunting.groups")
 
 local Yard = {}
 
@@ -50,7 +51,8 @@ function Yard.release(train)
   remote.call("utl", "release_train", train.id)
 end
 
---- Alle Wagen hinter dem Lok-Block am Kopf abkuppeln. Liefert den Zug, der weiterfährt.
+--- Alle Wagen hinter dem Lok-Block am Kopf abkuppeln. Liefert den Zug, der weiterfährt, und die
+--- abgestellten Wagen (Zug) oder nil.
 local function drop(train, head, stop, fx, fy)
   local carriages = train.carriages
   local first, step = 1, 1
@@ -73,8 +75,8 @@ local function drop(train, head, stop, fx, fy)
     warn(stop, "warn-cannot-leave")
     return train
   end
-  local kept = Couple.split(carriages[last_loco], carriages[next_i])
-  return kept or train
+  local kept, rest = Couple.split(carriages[last_loco], carriages[next_i])
+  return kept or train, rest
 end
 
 --- Nächster Wagen vor dem Kopf des Zuges (höchstens Const.SEARCH Kacheln). Einmalige kleine Suche je
@@ -107,8 +109,10 @@ function Yard.process(entry)
   local fx, fy = Geometry.forward(stop)
   local head = Geometry.ends(train, stop)
   if mode ~= "pickup" then
-    train = drop(train, head, stop, fx, fy)
+    local rest
+    train, rest = drop(train, head, stop, fx, fy)
     head = Geometry.ends(train, stop)
+    if rest then Groups.add(entry.unit, rest) end
   end
   if mode ~= "drop" then
     local target = find_ahead(train, head, fx, fy)

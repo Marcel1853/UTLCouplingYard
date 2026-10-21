@@ -1,8 +1,9 @@
---- Rangier-Takt: arbeitet die Warteschlange ab und schiebt Züge heran. on_nth_tick ist nur angemeldet,
---- solange etwas offen ist – ohne Rangiervorgang kostet der Mod nichts.
+--- Rangier-Takt: arbeitet die Warteschlange ab und schiebt Züge und Rangierloks heran. on_nth_tick ist
+--- nur angemeldet, solange etwas offen ist – ohne Rangiervorgang kostet der Mod nichts.
 local Const = require("scripts.core.const")
 local Yard = require("scripts.yard.yard")
 local Crawl = require("scripts.coupling.crawl")
+local Shunter = require("scripts.shunting.shunter")
 
 local Worker = {}
 
@@ -17,7 +18,9 @@ local function run()
   for _ = 1, math.min(BUDGET, #queue) do
     Yard.process(table.remove(queue, 1))
   end
-  Crawl.run(function(train) Yard.release(train) end)
+  Crawl.run(function(train, coupled, c)
+    if c.task then Shunter.coupled(c.task, train, coupled) else Yard.release(train) end
+  end)
   if not pending() then script.on_nth_tick(Const.TICK, nil) end
 end
 

@@ -3,6 +3,7 @@
 local Const = require("scripts.core.const")
 local Setup = require("scripts.core.setup")
 local Worker = require("scripts.yard.worker")
+local Groups = require("scripts.shunting.groups")
 local Section = require("scripts.gui.section")
 
 -- Rückrufe für UTL (Abschnitt im Stationsfenster) und Abfragen für andere Mods
@@ -30,6 +31,8 @@ end)
 script.on_load(function()
   Setup.listen()
   Worker.resume()
+  Groups.resume()
 end)
 
 script.on_event(defines.events.on_gui_selection_state_changed, Section.changed)
+script.on_event(defines.events.on_gui_text_changed, Section.text)

@@ -5,6 +5,8 @@
 --   C  Wagenbahnhof „tauschen“: eigene Wagen abstellen, wartende mitnehmen
 --   D  Rangierdepot: Lok in beide Richtungen taugt, Lok in eine Richtung nicht
 --   E  Umbauten sind bei UTL angemeldet (on_train_rebuilt mit changing = true)
+--   F  Rangierlok: Zug stellt Wagen ab, Rangierlok bringt sie sofort zur Ladebucht
+--   G  Rangierlok: an der Ladebucht warten die Wagen auf „leer“ (Test entlädt), dann zurück ins Lager
 local MOD = "UTLCouplingYard"
 local CY = "ucy-selftest"
 
@@ -19,9 +21,9 @@ local function rail(s, y)
   for x = -95, 95, 2 do s.create_entity({ name = "straight-rail", position = { x, y }, direction = 4, force = "player" }) end
 end
 
-local function stop(s, name, x, y, utl)
-  local e = s.create_entity({ name = utl and "utl-train-stop" or "train-stop", position = { x, y + 2 }, direction = 4,
-    force = "player", raise_built = true }) --[[@as LuaEntity]]
+local function stop(s, name, x, y, utl, west)
+  local e = s.create_entity({ name = utl and "utl-train-stop" or "train-stop", position = { x, y + (west and -2 or 2) },
+    direction = west and 12 or 4, force = "player", raise_built = true }) --[[@as LuaEntity]]
   e.backer_name = name
   return e
 end
@@ -87,12 +89,37 @@ local function build()
     run(l, { "D-Depot-" .. i })
     t["d_loco" .. i] = l
   end
+  -- F/G: Rangierlok. Depot westlich (Halt Richtung Westen), Zug stellt am F-Hof ab, Rangierlok bringt die
+  -- Wagen zur F-Bucht (sofort), von dort wenn leer zurück ins F-Lager (Halt Richtung Westen).
+  local y = 101
+  rail(s, y)
+  local depot = stop(s, "F-Depot", -85, y, true, true)
+  remote.call("utl", "set_station_role", depot.unit_number, MOD .. "/depot")
+  local hof, bucht = stop(s, "F-Hof", 0, y, true), stop(s, "F-Bucht", 40, y, true)
+  local lager = stop(s, "F-Lager", -30, y, true, true)
+  yard(hof, "drop")
+  yard(bucht, "drop")
+  yard(lager, "drop")
+  remote.call("utl", "set_station_data", hof.unit_number, MOD, "shunt_to", "F-Bucht")
+  remote.call("utl", "set_station_data", bucht.unit_number, MOD, "shunt_to", "F-Lager")
+  remote.call("utl", "set_station_data", bucht.unit_number, MOD, "shunt_when", "empty")
+  stop(s, "F-Ende", 90, y)
+  local shunter = stock(s, "locomotive", -68, y, 12)
+  stock(s, "locomotive", -75, y, 4)
+  run(shunter, { "F-Depot" })
+  t.f_shunter = shunter
+  t.f_loco = stock(s, "locomotive", -40, y)
+  t.f_w1 = stock(s, "cargo-wagon", -47, y)
+  t.f_w2 = stock(s, "cargo-wagon", -54, y)
+  t.f_w1.insert({ name = "iron-plate", count = 100 })
+  t.f_w2.insert({ name = "iron-plate", count = 100 })
+  run(t.f_loco, { "F-Hof", "F-Ende" })
   return t
 end
 
 local function listen()
   local ids = remote.call("utl", "get_event_ids") --[[@as table]]
-  script.on_event(ids.on_train_rebuilt, function(event)
+  script.on_event(ids.on_train_rebuilt, function(event) ---@param event table
     storage.rebuilt = storage.rebuilt or { yes = 0, no = 0 }
     if event.changing then storage.rebuilt.yes = storage.rebuilt.yes + 1 else storage.rebuilt.no = storage.rebuilt.no + 1 end
   end)
@@ -146,11 +173,24 @@ script.on_nth_tick(60, function()
     check("D Rangierdepot: Lok in beide Richtungen taugt, Lok in eine Richtung nicht",
       shunters[one.id] ~= nil and shunters[two.id] == nil, serpent.line(shunters))
   end
-  if (s.a and s.b and s.c and s.d) or game.tick > 60 * 150 then
+  -- F: Wagen stehen ohne Lok an der F-Bucht (östlich), Rangierlok wieder im Depot → entladen für G
+  local w1, w2 = t.f_w1, t.f_w2
+  local parked = w1.valid and w2.valid and w1.train == w2.train and #w1.train.carriages == 2
+  if parked and not s.f and w1.position.x > 20 and at(t.f_shunter, "F-Depot") then
+    s.f = true
+    check("F Rangierlok: Wagen zur Ladebucht gebracht, Lok zurück im Depot", true, "x " .. math.floor(w1.position.x))
+    w1.get_inventory(defines.inventory.cargo_wagon).clear()
+    w2.get_inventory(defines.inventory.cargo_wagon).clear()
+  end
+  if parked and s.f and not s.g and w1.position.x < 0 and at(t.f_shunter, "F-Depot") then
+    s.g = true
+    check("G Rangierlok: leere Wagen zurück ins Lager, Lok zurück im Depot", true, "x " .. math.floor(w1.position.x))
+  end
+  if (s.a and s.b and s.c and s.d and s.f and s.g) or game.tick > 60 * 240 then
     storage.done = true
     local r = storage.rebuilt or { yes = 0, no = 0 }
     check("E Umbauten bei UTL angemeldet", r.no == 0, "angemeldet " .. r.yes .. ", unangemeldet " .. r.no)
-    for _, k in ipairs({ "a", "b", "c", "d" }) do
+    for _, k in ipairs({ "a", "b", "c", "d", "f", "g" }) do
       if not s[k] then check(string.upper(k) .. " nicht angekommen", false) end
     end
     local bad = 0
