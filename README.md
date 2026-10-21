@@ -30,11 +30,29 @@ the wagons, couples them, brings them to the target, uncouples and returns to it
 Example: the train leaves full wagons at "Arrival" → shunting locomotive brings them to "Unloading" → when empty, on
 to "Departure" → the next train picks them up there.
 
+Several wagon yards may share a name (e.g. three tracks called "Loading bay"): the shunting locomotive takes a
+free one. It arrives pushing the wagons, so dead-end tracks work; if needed it changes direction at a turnaround
+first.
+
+## Relay
+
+Let trains run only part of the way and hand the wagons over. Give a wagon yard a **relay number** (station window),
+and wire the signal [virtual-signal=ucy-relay] **Relay** with that number to the train stop of a requester (or
+provider). Deliveries to it then stop at the wagon yard after loading: the train leaves its wagons there – the
+delivery stays with the wagons – and its locomotives return to their depot. The next train that picks up the wagons
+at a wagon yard takes the delivery on to the requester.
+
+## Scenario
+
+"UTL Coupling Yard – shunting yard" (new game → scenarios): a large shunting yard with inserters loading and
+unloading, plus demo tracks for leaving, picking up, swapping and the relay.
+
 ## Tips
 
 - Build stops on the right-hand side in the direction of travel, as usual.
 - Leave room ahead of a wagon yard for waiting wagons, and use rail signals so trains do not run into parked wagons.
 - A train arriving with its wagons first (pushed) keeps them coupled.
+- UTL does not send shunting locomotives to refuel: give them plenty of fuel or a "fuel low" interrupt.
 
 ## Performance
 

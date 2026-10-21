@@ -7,5 +7,9 @@ Date: 2026-10-21
     - Every coupling is announced to UTL, so deliveries and schedules survive it.
     - Shunting depot checks that shunting locomotives drive both ways.
     - Shunting: a wagon yard can name a target wagon yard (right away, when empty or when full). A free shunting locomotive fetches the wagons left there and brings them to the target, using a turnaround if needed.
+    - Shunting picks a free target track among wagon yards with the same name and pushes the wagons in (via a turnaround if needed).
+    - Relay: signal "Relay" with value N at a requester or provider routes its deliveries via the wagon yard with relay number N. The delivery stays with the wagons; the next train picking them up delivers it.
+    - Wagons already standing at a wagon yard are registered when the mod starts (remote function "scan").
+    - Scenario "UTL Coupling Yard – shunting yard": large shunting yard with real loading and unloading, demo tracks.
   Info:
     - No timers while nothing is being shunted.

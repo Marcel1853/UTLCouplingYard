@@ -93,6 +93,40 @@ function Groups.occupied(unit)
   return false
 end
 
+--- Wagen erfassen, die schon an einem Wagenbahnhof stehen (aus Blaupausen oder von Hand hingestellt):
+--- eine kleine Suche entlang des Gleises an der Haltestelle. Nur beim Start bzw. auf Anfrage.
+function Groups.scan(unit)
+  local stop = Registry.stop(unit)
+  if not stop then return 0 end
+  local o = stop.orientation * 2 * math.pi
+  local fx, fy = math.sin(o), -math.cos(o)
+  local p, r = stop.position, Const.SEARCH
+  local area = { { p.x - math.abs(fx) * r - 4, p.y - math.abs(fy) * r - 4 },
+    { p.x + math.abs(fx) * r + 4, p.y + math.abs(fy) * r + 4 } }
+  local seen, count = {}, 0
+  for _, e in pairs(stop.surface.find_entities_filtered({ area = area, type = Const.ROLLING_STOCK })) do
+    local train = e.train
+    if train and not seen[train.id] then
+      seen[train.id] = true
+      local locos = train.locomotives
+      if #locos.front_movers + #locos.back_movers == 0 and not Groups.occupied(unit) then
+        Groups.add(unit, train)
+        count = count + 1
+      end
+    end
+  end
+  return count
+end
+
+--- Alle Wagenbahnhöfe erfassen (on_init, Fernaufruf „scan“).
+function Groups.scan_all()
+  local count = 0
+  for unit, role in pairs(storage.stations) do
+    if role == Const.ROLE.yard then count = count + Groups.scan(unit) end
+  end
+  return count
+end
+
 --- on_load: Prüftakt wieder anmelden, wenn Verbände warten.
 function Groups.resume()
   if storage.waiting and #storage.waiting > 0 then script.on_nth_tick(Const.CHECK_TICKS, check) end

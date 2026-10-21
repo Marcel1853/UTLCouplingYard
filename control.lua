@@ -9,6 +9,9 @@ local Section = require("scripts.gui.section")
 -- Rückrufe für UTL (Abschnitt im Stationsfenster) und Abfragen für andere Mods
 remote.add_interface(Const.MOD, {
   section = Section.build,
+  --- Wagen erfassen, die schon an Wagenbahnhöfen stehen (z. B. nach dem Bau aus einer Blaupause).
+  --- Liefert die Zahl neuer Wagenverbände.
+  scan = function() return Groups.scan_all() end,
   --- Taugliche Rangierloks: Zug-ID → Rangierdepot (unit). Kopie.
   get_shunters = function()
     local copy = {}
@@ -19,7 +22,7 @@ remote.add_interface(Const.MOD, {
 
 script.on_init(function()
   Setup.storage()
-  Setup.register()
+  if Setup.register() then Groups.scan_all() end
   Setup.listen()
 end)
 
