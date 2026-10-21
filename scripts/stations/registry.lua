@@ -107,14 +107,21 @@ function Registry.utl_stop(unit)
   return stop and stop.valid and stop or nil
 end
 
---- Wagenbahnhof mit dem Haltestellen-Namen `name` auf derselben Oberfläche wie die Haltestelle `near`
---- (unit oder nil).
-function Registry.find_yard(name, near)
+--- Wagenbahnhof mit dem Haltestellen-Namen `name` auf derselben Oberfläche wie die Haltestelle `near`,
+--- für den `free(unit)` gilt (nächster zuerst). Liefert (unit oder nil, ob es den Namen überhaupt gibt).
+function Registry.find_yard(name, near, free)
+  local best, best_d, exists
   for unit, role in pairs(storage.stations) do
     local stop = role == Const.ROLE.yard and Registry.stop(unit)
-    if stop and stop.backer_name == name and stop.surface == near.surface then return unit end
+    if stop and stop.backer_name == name and stop.surface == near.surface then
+      exists = true
+      if free(unit) then
+        local d = (stop.position.x - near.position.x) ^ 2 + (stop.position.y - near.position.y) ^ 2
+        if not best_d or d < best_d then best, best_d = unit, d end
+      end
+    end
   end
-  return nil
+  return best, exists
 end
 
 return Registry

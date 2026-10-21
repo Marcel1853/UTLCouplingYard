@@ -32,17 +32,22 @@ local function job(train, stops)
   return id, why
 end
 
---- Verband ist bereit (Groups.on_ready): Auftrag anlegen und eine freie Rangierlok suchen.
+--- Verband ist bereit (Groups.on_ready): Auftrag anlegen und eine freie Rangierlok suchen. Das Ziel
+--- (ein freies Gleis mit dem Namen) wird erst gewählt, wenn eine Lok losfährt.
 function Shunter.request(group, to_name)
   local from = Registry.stop(group.unit)
   if not from then return end
-  local to = Registry.find_yard(to_name, from)
-  if not to then
+  local _, exists = Registry.find_yard(to_name, from, function() return true end)
+  if not exists then
     warn(from, "warn-no-target")
     return
   end
-  storage.tasks[#storage.tasks + 1] = { group = group, to = to }
+  storage.tasks[#storage.tasks + 1] = { group = group, to_name = to_name }
   Shunter.assign()
+end
+
+local function free_target(unit)
+  return not storage.reserved[unit] and not Groups.occupied(unit)
 end
 
 --- Zum Ende des Verbands schicken: Punkt Const.APPROACH Kacheln davor. Das nähere Ende zuerst (sonst
@@ -83,6 +88,8 @@ function Shunter.assign()
     if not Groups.valid(task.group) then
       table.remove(tasks, i)
     else
+      local from = Registry.stop(task.group.unit)
+      task.to = from and Registry.find_yard(task.to_name, from, free_target)
       local p = task.group.wagons[1].position
       local list = {}
       for id in pairs(free) do
@@ -96,13 +103,14 @@ function Shunter.assign()
       end
       table.sort(list, function(x, y) return x.d < y.d end)
       local started = false
-      for _, entry in ipairs(list) do
+      for _, entry in ipairs(task.to and list or {}) do
         local train = entry.train
         if train.front_stock.surface == task.group.wagons[1].surface and fetch(task, train) then
           free[train.id] = nil
           task.locos = {}
           for _, c in pairs(train.carriages) do task.locos[c.unit_number] = true end
           task.loco = train.front_stock
+          storage.reserved[task.to] = true
           started = true
           break
         end
@@ -113,10 +121,22 @@ function Shunter.assign()
   end
 end
 
---- Auftrag zum Ziel, falls nötig über eine Wende.
+--- Kommt der Zug am Ziel mit den Wagen voran an (geschoben)? Dann kann die Lok danach rückwärts wieder
+--- heraus – wichtig bei Stumpfgleisen. Eine Pfadsuche, nur beim Losschicken.
+local function pushing(task, train, stop)
+  local result = game.train_manager.request_train_path({ train = train, goals = { { train_stop = stop } } })
+  if not result.found_path then return nil end
+  local leading = result.is_front and train.front_stock or train.back_stock
+  return leading ~= nil and not task.locos[leading.unit_number]
+end
+
+--- Auftrag zum Ziel: direkt, wenn die Wagen dabei vorn sind; sonst über eine Wende (dort wechselt die
+--- Richtung); geht beides nicht, direkt.
 local function deliver(task, train)
   local target = { station = task.to, wait = WAIT }
-  local id = job(train, { target })
+  local stop = Registry.stop(task.to)
+  local id
+  if stop and pushing(task, train, stop) then id = job(train, { target }) end
   if not id then
     for unit, role in pairs(storage.stations) do
       if role == Const.ROLE.turn and Registry.stop(unit) then
@@ -125,6 +145,7 @@ local function deliver(task, train)
       end
     end
   end
+  if not id then id = job(train, { target }) end
   if not id then return false end
   task.job, task.phase = id, "deliver"
   storage.jobs[id] = task
@@ -140,11 +161,13 @@ end
 --- Heranschieben fertig (aus dem Rangier-Takt).
 function Shunter.coupled(task, train, ok)
   if not ok then
+    storage.reserved[task.to] = nil
     warn(Registry.stop(task.group.unit), "warn-shunt-failed")
     home(train)
     return
   end
   if not deliver(task, train) then
+    storage.reserved[task.to] = nil
     warn(Registry.stop(task.to), "warn-unreachable")
     home(train)
   end
@@ -159,6 +182,7 @@ function Shunter.job_finished(event)
   local train = event.train
   if not (train and train.valid) then return end
   if event.canceled or not (task.target.valid and Groups.valid(task.group)) then
+    storage.reserved[task.to] = nil
     return -- Lok fährt mit ihrem Fahrplan zurück ins Depot
   end
   remote.call("utl", "hold_train", train.id, Const.MOD)
@@ -197,8 +221,10 @@ function Shunter.arrived(event)
   remote.call("utl", "cancel_job", event.job_id)
   train.manual_mode = true
   local loco, wagons = split(task, train)
+  storage.reserved[task.to] = nil
   if wagons then Groups.add(task.to, wagons) end
   home(loco or train)
+  Shunter.assign()
   return true
 end
 

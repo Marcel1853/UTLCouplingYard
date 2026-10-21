@@ -67,6 +67,7 @@ end
 function Groups.add(unit, train, carrying)
   local group = { unit = unit, wagons = {}, delivery = carrying or nil }
   for i, w in ipairs(train.carriages) do group.wagons[i] = w end
+  storage.parked[unit] = group
   if carrying then return group end
   local to, when = Registry.shunt(unit)
   if not to then return group end
@@ -77,6 +78,19 @@ function Groups.add(unit, train, carrying)
     script.on_nth_tick(Const.CHECK_TICKS, check)
   end
   return group
+end
+
+--- Steht an der Station noch ein Verband, den der Mod dort abgestellt hat? (Ein Verband, der inzwischen
+--- woanders steht, zählt nicht mehr.)
+function Groups.occupied(unit)
+  local group = storage.parked[unit]
+  local stop = Registry.stop(unit)
+  if group and stop and Groups.valid(group) then
+    local p, q = group.wagons[1].position, stop.position
+    if (p.x - q.x) ^ 2 + (p.y - q.y) ^ 2 < Const.NEAR ^ 2 then return true end
+  end
+  storage.parked[unit] = nil
+  return false
 end
 
 --- on_load: Prüftakt wieder anmelden, wenn Verbände warten.

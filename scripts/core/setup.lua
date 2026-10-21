@@ -28,6 +28,8 @@ function Setup.storage()
   storage.utl_stops = storage.utl_stops or {} -- unit → Haltestelle aller UTL-Stationen (Staffel-Signal)
   storage.homeward = storage.homeward or {}   -- Lok (unit_number) → Name des Heimatdepots nach einer Übergabe
   storage.relayed = storage.relayed or {}     -- Lieferungs-ID → Staffel-Halt schon eingefügt
+  storage.parked = storage.parked or {}       -- Wagenbahnhof (unit) → dort abgestellter Verband
+  storage.reserved = storage.reserved or {}   -- Wagenbahnhof (unit) → Rangierlok ist mit Wagen dorthin unterwegs
 end
 
 local function role(name, extra)
