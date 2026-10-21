@@ -19,7 +19,7 @@ local function run()
     Yard.process(table.remove(queue, 1))
   end
   Crawl.run(function(train, coupled, c)
-    if c.task then Shunter.coupled(c.task, train, coupled) else Yard.release(train) end
+    if c.task then Shunter.coupled(c.task, train, coupled) else Yard.release(train, c.info) end
   end)
   if not pending() then script.on_nth_tick(Const.TICK, nil) end
 end

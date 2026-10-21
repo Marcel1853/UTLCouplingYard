@@ -7,10 +7,11 @@ local Geometry = require("scripts.coupling.geometry")
 local Crawl = {}
 
 --- Neuen Vorgang anlegen: `head` = Kopfwagen des Zuges, `target` = nächster Wagen vor ihm,
---- (fx, fy) = Fahrtrichtung, `task` = Rangierauftrag (nil am Wagenbahnhof).
-function Crawl.start(head, target, fx, fy, task)
+--- (fx, fy) = Fahrtrichtung, `task` = Rangierauftrag (nil am Wagenbahnhof), `info` = Angaben des
+--- Wagenbahnhofs (z. B. ob der Zug vorher eine Lieferung hatte).
+function Crawl.start(head, target, fx, fy, task, info)
   storage.crawls[#storage.crawls + 1] = {
-    head = head, target = target, dir = Geometry.ahead(head, fx, fy), task = task,
+    head = head, target = target, dir = Geometry.ahead(head, fx, fy), task = task, info = info,
     ids = Couple.announce(head, target), started = game.tick, still = 0,
   }
 end

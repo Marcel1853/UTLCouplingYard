@@ -7,6 +7,8 @@
 --   E  Umbauten sind bei UTL angemeldet (on_train_rebuilt mit changing = true)
 --   F  Rangierlok: Zug stellt Wagen ab, Rangierlok bringt sie sofort zur Ladebucht
 --   G  Rangierlok: an der Ladebucht warten die Wagen auf „leer“ (Test entlädt), dann zurück ins Lager
+--   H  Staffel: UTL-Lieferung hält am Staffel-Bahnhof (Signal am Abnehmer), Wagen bleiben mit der
+--      Lieferung stehen, Lok fährt ins Depot, ein zweiter Zug holt die Wagen und liefert sie aus
 local MOD = "UTLCouplingYard"
 local CY = "ucy-selftest"
 
@@ -30,7 +32,7 @@ end
 
 local function stock(s, name, x, y, dir)
   local e = s.create_entity({ name = name, position = { x, y }, direction = dir or 4, force = "player" }) --[[@as LuaEntity]]
-  if name == "locomotive" then e.insert({ name = "coal", count = 50 }) end
+  if name == "locomotive" then e.insert({ name = "coal", count = 150 }) end
   return e
 end
 
@@ -114,11 +116,64 @@ local function build()
   t.f_w1.insert({ name = "iron-plate", count = 100 })
   t.f_w2.insert({ name = "iron-plate", count = 100 })
   run(t.f_loco, { "F-Hof", "F-Ende" })
+  -- H: Staffel. Depot ganz im Westen (Halt Richtung Westen), Anbieter Richtung Osten, Staffel-Bahnhof
+  -- (Richtung Westen) davor: Zug A lädt, fährt zurück zum Staffel-Bahnhof, stellt den Wagen ab und fährt
+  -- weiter ins Depot. Zug B (wird erst dann eingesetzt) holt den Wagen und fährt zum Abnehmer im Osten.
+  y = 141
+  rail(s, y)
+  local W = defines.wire_connector_id
+  local function combinator(x, cy, target, signal, count)
+    local c = s.create_entity({ name = "constant-combinator", position = { x, cy }, force = "player" }) --[[@as LuaEntity]]
+    local behavior = c.get_or_create_control_behavior() --[[@as LuaConstantCombinatorControlBehavior]]
+    behavior.get_section(1).set_slot(1, { value = signal, min = count })
+    c.get_wire_connector(W.circuit_green, true).connect_to(target.get_wire_connector(W.circuit_green, true))
+  end
+  local function cfg(e, changes) changes.network = "H"; remote.call("utl", "configure_station", e.unit_number, changes) end
+  local hdepot = stop(s, "H-Depot", -85, y, true, true)
+  cfg(hdepot, { mode = "depot" })
+  local prov = stop(s, "H-Anbieter", 30, y, true)
+  cfg(prov, { mode = "station", provide = true, request = false })
+  combinator(33.5, y + 5.5, prov, { type = "item", name = "iron-plate", quality = "normal", comparator = "=" }, 2000)
+  local req = stop(s, "H-Abnehmer", 70, y, true)
+  cfg(req, { mode = "station", provide = false, request = true, request_threshold = 100 })
+  remote.call("utl", "set_request", req.unit_number, 1, { type = "item", name = "iron-plate" }, 400)
+  combinator(73.5, y + 5.5, req, { type = "virtual", name = "ucy-relay", quality = "normal", comparator = "=" }, 1)
+  t.h_req, t.h_prov = req.unit_number, prov.unit_number
+  local relay = stop(s, "H-Hof", 0, y, true, true)
+  yard(relay, "drop")
+  remote.call("utl", "set_station_data", relay.unit_number, MOD, "relay", 1)
+  yard(stop(s, "H-Abhol", 8, y, true), "pickup")
+  t.h_w = stock(s, "cargo-wagon", -46, y)
+  stock(s, "locomotive", -53, y, 4)
+  t.h_a = stock(s, "locomotive", -60, y, 12)
+  run(t.h_a, { "H-Depot" })
   return t
 end
 
 local function listen()
   local ids = remote.call("utl", "get_event_ids") --[[@as table]]
+  script.on_event(ids.on_delivery_created, function(event) ---@param event table
+    if event.requester == storage.t.h_req then storage.h_delivery = event.id end
+  end)
+  script.on_event(ids.on_delivery_state_changed, function(event) ---@param event table
+    local train = event.train
+    if event.id ~= storage.h_delivery or not (train and train.valid) then return end
+    if event.state == "loading" then
+      for key, amount in pairs(event.manifest) do
+        local name = key:match("^item|([^|]+)|")
+        if name then train.insert({ name = name, count = amount }) end
+      end
+    elseif event.state == "unloading" then
+      train.clear_items_inside()
+      remote.call("utl", "configure_station", storage.t.h_req, { request = false })
+    end
+  end)
+  script.on_event(ids.on_delivery_completed, function(event) ---@param event table
+    if event.id == storage.h_delivery then storage.h_done = event.train_id end
+  end)
+  script.on_event(ids.on_delivery_canceled, function(event) ---@param event table
+    if event.id == storage.h_delivery then storage.h_canceled = event.reason end
+  end)
   script.on_event(ids.on_train_rebuilt, function(event) ---@param event table
     storage.rebuilt = storage.rebuilt or { yes = 0, no = 0 }
     if event.changing then storage.rebuilt.yes = storage.rebuilt.yes + 1 else storage.rebuilt.no = storage.rebuilt.no + 1 end
@@ -127,6 +182,7 @@ end
 
 script.on_init(function()
   storage.results = {}
+  remote.call("utl", "set_map_config", "utl-debug-log", true)
   storage.t = build()
   listen()
   say("Aufbau fertig")
@@ -186,11 +242,32 @@ script.on_nth_tick(60, function()
     s.g = true
     check("G Rangierlok: leere Wagen zurück ins Lager, Lok zurück im Depot", true, "x " .. math.floor(w1.position.x))
   end
-  if (s.a and s.b and s.c and s.d and s.f and s.g) or game.tick > 60 * 240 then
+  -- H: Wagen steht ohne Lok am Staffel-Bahnhof und trägt die Lieferung → zweiten Zug losschicken
+  local hw = t.h_w
+  if not s.h_parked and hw.valid and hw.train and #hw.train.carriages == 1 and hw.position.x > 0 and hw.position.x < 28 then
+    s.h_parked = true
+    local info = remote.call("utl", "get_delivery", storage.h_delivery or 0) --[[@as table?]]
+    check("H Staffel: Wagen abgestellt, Lieferung hängt am Wagen", info ~= nil and info.train_id == hw.train.id,
+      serpent.line({ lieferung = info and info.train_id, wagen = hw.train.id }))
+  end
+  local loco = t.h_a.valid and t.h_a.train
+  local home = loco and remote.call("utl", "get_train", loco.id) --[[@as table?]]
+  if s.h_parked and not t.h_b and home and home.idle then
+    check("H Staffel: Lok des ersten Zuges frei im Depot", loco and #loco.carriages == 2)
+    t.h_b = stock(game.surfaces[CY], "locomotive", -30, 141)
+    run(t.h_b, { "H-Abhol" })
+  end
+  if storage.h_done and not s.h then
+    s.h = true
+    check("H Staffel: zweiter Zug hat mit dem Wagen ausgeliefert", t.h_b ~= nil and hw.valid and hw.train == t.h_b.train,
+      serpent.line({ abbruch = storage.h_canceled }))
+  end
+  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h) or game.tick > 60 * 300 then
     storage.done = true
     local r = storage.rebuilt or { yes = 0, no = 0 }
     check("E Umbauten bei UTL angemeldet", r.no == 0, "angemeldet " .. r.yes .. ", unangemeldet " .. r.no)
-    for _, k in ipairs({ "a", "b", "c", "d", "f", "g" }) do
+    if storage.h_canceled then check("H Lieferung abgebrochen: " .. tostring(storage.h_canceled), false) end
+    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h" }) do
       if not s[k] then check(string.upper(k) .. " nicht angekommen", false) end
     end
     local bad = 0

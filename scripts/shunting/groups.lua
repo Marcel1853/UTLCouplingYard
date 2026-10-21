@@ -62,10 +62,12 @@ local function check()
   if #waiting == 0 then script.on_nth_tick(Const.CHECK_TICKS, nil) end
 end
 
---- Neuer Verband an Station `unit` aus dem (lokfreien) Zug `train`.
-function Groups.add(unit, train)
-  local group = { unit = unit, wagons = {} }
+--- Neuer Verband an Station `unit` aus dem (lokfreien) Zug `train`. Trägt er eine Lieferung (Staffel),
+--- holt ihn der nächste Zug ab, nicht die Rangierlok.
+function Groups.add(unit, train, carrying)
+  local group = { unit = unit, wagons = {}, delivery = carrying or nil }
   for i, w in ipairs(train.carriages) do group.wagons[i] = w end
+  if carrying then return group end
   local to, when = Registry.shunt(unit)
   if not to then return group end
   if Groups.ready(group, when) then

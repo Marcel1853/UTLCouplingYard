@@ -1,6 +1,6 @@
 --- Eigener Abschnitt im UTL-Stationsfenster: nur an Stationen mit einer Rolle dieses Mods.
---- Wagenbahnhof: Betriebsart, Rangierziel (Name eines anderen Wagenbahnhofs) und wann die Rangierlok
---- die abgestellten Wagen dorthin bringt.
+--- Wagenbahnhof: Betriebsart, Rangierziel (Name eines anderen Wagenbahnhofs), wann die Rangierlok die
+--- abgestellten Wagen dorthin bringt, und die Staffel-Nummer.
 local Const = require("scripts.core.const")
 local Registry = require("scripts.stations.registry")
 
@@ -26,6 +26,13 @@ local function yard(flow, unit)
     tooltip = { "utl-coupling-yard.shunt-to-tooltip" } })
   field.style.width = 160
   dropdown(flow, Const.WHEN, "when-", when or Const.WHEN[1], { ucy_when = unit })
+  local relay = Registry.relay(unit)
+  row = flow.add({ type = "flow", direction = "horizontal" })
+  row.style.vertical_align = "center"
+  row.add({ type = "label", caption = { "utl-coupling-yard.relay" }, tooltip = { "utl-coupling-yard.relay-tooltip" } })
+  field = row.add({ type = "textfield", text = relay > 0 and tostring(relay) or "", numeric = true,
+    tags = { ucy_relay = unit }, tooltip = { "utl-coupling-yard.relay-tooltip" } })
+  field.style.width = 60
 end
 
 --- Rückruf von UTL beim Öffnen des Stationsfensters.
@@ -60,10 +67,14 @@ end
 --- Ereignis on_gui_text_changed.
 function Section.text(event)
   local element = event.element
-  local unit = element.valid and element.tags.ucy_target
-  if not unit then return end
-  local text = element.text
-  set(unit, "shunt_to", text ~= "" and text or nil)
+  if not element.valid then return end
+  local tags, text = element.tags, element.text
+  if tags.ucy_target then
+    set(tags.ucy_target, "shunt_to", text ~= "" and text or nil)
+  elseif tags.ucy_relay then
+    local n = tonumber(text)
+    set(tags.ucy_relay, "relay", n and n > 0 and math.floor(n) or nil)
+  end
 end
 
 return Section

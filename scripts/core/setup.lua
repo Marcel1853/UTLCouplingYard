@@ -7,6 +7,7 @@ local Worker = require("scripts.yard.worker")
 local Depot = require("scripts.shunting.depot")
 local Groups = require("scripts.shunting.groups")
 local Shunter = require("scripts.shunting.shunter")
+local Relay = require("scripts.yard.relay")
 
 Groups.on_ready = Shunter.request
 
@@ -24,6 +25,9 @@ function Setup.storage()
   storage.tasks = storage.tasks or {}       -- Rangieraufträge ohne Lok: { group, to }
   storage.jobs = storage.jobs or {}         -- UTL-Auftrags-ID → Rangierauftrag
   storage.waiting = storage.waiting or {}   -- Wagenverbände, die auf „leer“/„voll“ warten
+  storage.utl_stops = storage.utl_stops or {} -- unit → Haltestelle aller UTL-Stationen (Staffel-Signal)
+  storage.homeward = storage.homeward or {}   -- Lok (unit_number) → Name des Heimatdepots nach einer Übergabe
+  storage.relayed = storage.relayed or {}     -- Lieferungs-ID → Staffel-Halt schon eingefügt
 end
 
 local function role(name, extra)
@@ -63,6 +67,9 @@ function Setup.listen()
     Worker.wake()
   end)
   script.on_event(ids.on_train_idle, Depot.idle)
+  script.on_event(ids.on_delivery_state_changed, Relay.state_changed)
+  script.on_event(ids.on_delivery_completed, Relay.ended)
+  script.on_event(ids.on_delivery_canceled, Relay.ended)
 end
 
 return Setup

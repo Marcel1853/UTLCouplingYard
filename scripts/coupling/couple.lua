@@ -6,9 +6,10 @@ local Couple = {}
 local DIRS = { defines.rail_direction.front, defines.rail_direction.back }
 
 --- Trennt den Zug zwischen den benachbarten Wagen `keep` und `other`. Der Teil mit `keep` übernimmt
---- bei UTL alles vom alten Zug, den anderen Teil vergisst UTL. Liefert (Zug mit keep, Zug mit other)
---- oder nil, wenn die beiden nicht nebeneinander hängen.
-function Couple.split(keep, other)
+--- bei UTL alles vom alten Zug (Lieferung, Festhalten, Auftrag), den anderen Teil vergisst UTL – mit
+--- `to_other` umgekehrt (Staffel: die Lieferung bleibt bei den Wagen). Liefert (Zug mit keep, Zug mit
+--- other) oder nil, wenn die beiden nicht nebeneinander hängen.
+function Couple.split(keep, other, to_other)
   local train = keep.train
   if not (train and other.train == train) then return nil end
   for _, dir in pairs(DIRS) do
@@ -17,10 +18,10 @@ function Couple.split(keep, other)
       remote.call("utl", "begin_train_change", { old })
       local ok = keep.disconnect_rolling_stock(dir)
       local kept, rest = keep.train, other.train
-      remote.call("utl", "end_train_change", { old }, kept)
+      remote.call("utl", "end_train_change", { old }, to_other and rest or kept)
       if not ok or kept == rest then return nil end
       rest.manual_mode = true -- hängt hinten noch eine Lok dran, fährt sie nicht mit dem kopierten Fahrplan los
-      remote.call("utl", "forget_train", rest.id)
+      remote.call("utl", "forget_train", to_other and kept.id or rest.id)
       return kept, rest
     end
   end

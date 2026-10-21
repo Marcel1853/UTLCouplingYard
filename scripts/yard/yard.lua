@@ -7,6 +7,7 @@ local Couple = require("scripts.coupling.couple")
 local Crawl = require("scripts.coupling.crawl")
 local Geometry = require("scripts.coupling.geometry")
 local Groups = require("scripts.shunting.groups")
+local Relay = require("scripts.yard.relay")
 
 local Yard = {}
 
@@ -30,9 +31,24 @@ function Yard.arrived(event)
   return true
 end
 
---- Zug weiterschicken: nächster Halt im Fahrplan, automatisch, bei UTL freigeben.
-function Yard.release(train)
+--- Zug weiterschicken: nächster Halt im Fahrplan, automatisch, bei UTL freigeben. Lok nach einer
+--- Übergabe → Heimatdepot; hat der Zug gerade eine Lieferung übernommen, hat UTL die Halte schon gesetzt.
+function Yard.release(train, info)
   if not (train and train.valid) then return end
+  for _, c in pairs(train.carriages) do
+    local depot = storage.homeward[c.unit_number]
+    if depot then
+      storage.homeward[c.unit_number] = nil
+      Relay.send_home(train, depot)
+      remote.call("utl", "release_train", train.id)
+      return
+    end
+  end
+  if info and not info.had_delivery and Relay.has_delivery(train) then
+    train.manual_mode = false
+    remote.call("utl", "release_train", train.id)
+    return
+  end
   local schedule = train.get_schedule()
   local count = schedule and schedule.get_record_count() or 0
   if count > 0 then
@@ -51,9 +67,9 @@ function Yard.release(train)
   remote.call("utl", "release_train", train.id)
 end
 
---- Alle Wagen hinter dem Lok-Block am Kopf abkuppeln. Liefert den Zug, der weiterfährt, und die
---- abgestellten Wagen (Zug) oder nil.
-local function drop(train, head, stop, fx, fy)
+--- Alle Wagen hinter dem Lok-Block am Kopf abkuppeln (`to_wagons`: UTL-Lieferung bleibt bei den Wagen).
+--- Liefert den Zug, der weiterfährt, und die abgestellten Wagen (Zug) oder nil.
+local function drop(train, head, stop, fx, fy, to_wagons)
   local carriages = train.carriages
   local first, step = 1, 1
   if carriages[1] ~= head then first, step = #carriages, -1 end
@@ -75,7 +91,7 @@ local function drop(train, head, stop, fx, fy)
     warn(stop, "warn-cannot-leave")
     return train
   end
-  local kept, rest = Couple.split(carriages[last_loco], carriages[next_i])
+  local kept, rest = Couple.split(carriages[last_loco], carriages[next_i], to_wagons)
   return kept or train, rest
 end
 
@@ -109,15 +125,19 @@ function Yard.process(entry)
   local fx, fy = Geometry.forward(stop)
   local head = Geometry.ends(train, stop)
   if mode ~= "pickup" then
+    local home = Relay.handover(train, entry.unit)
     local rest
-    train, rest = drop(train, head, stop, fx, fy)
+    train, rest = drop(train, head, stop, fx, fy, home ~= nil)
     head = Geometry.ends(train, stop)
-    if rest then Groups.add(entry.unit, rest) end
+    if rest then
+      Groups.add(entry.unit, rest, home ~= nil)
+      if home then storage.homeward[train.carriages[1].unit_number] = home end
+    end
   end
   if mode ~= "drop" then
     local target = find_ahead(train, head, fx, fy)
     if target then
-      Crawl.start(head, target, fx, fy)
+      Crawl.start(head, target, fx, fy, nil, { had_delivery = Relay.has_delivery(train) })
       return
     end
   end
