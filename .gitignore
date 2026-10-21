@@ -7,3 +7,6 @@ CLAUDE.md
 
 # Gepackte Mod-Zips
 dist/
+
+# Editor-Einstellungen
+.vscode/
