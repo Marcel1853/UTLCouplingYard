@@ -1,0 +1,9 @@
+{
+  "name": "ucy-selftest",
+  "version": "0.0.1",
+  "title": "UTL Coupling Yard – Selbsttest",
+  "author": "Marcel171297",
+  "factorio_version": "2.1",
+  "description": "Nur für Headless-Tests, wird nicht veröffentlicht.",
+  "dependencies": ["base >= 2.1.0", "UTLogistics >= 0.0.20", "UTLCouplingYard"]
+}

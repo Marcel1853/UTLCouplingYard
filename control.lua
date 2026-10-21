@@ -1,6 +1,35 @@
 -- UTL Coupling Yard: An- und Abkuppeln für Unified Train Logistics (Add-on über die UTL-Schnittstelle).
--- Noch ein Grundgerüst – Plan und Schnittstelle stehen in docs/PLAN.md und docs/API.md.
-local Api = require("scripts.api")
+-- Plan und Schnittstelle stehen in docs/PLAN.md und docs/API.md.
+local Const = require("scripts.core.const")
+local Setup = require("scripts.core.setup")
+local Worker = require("scripts.yard.worker")
+local Section = require("scripts.gui.section")
 
-script.on_init(Api.check)
-script.on_configuration_changed(Api.check)
+-- Rückrufe für UTL (Abschnitt im Stationsfenster) und Abfragen für andere Mods
+remote.add_interface(Const.MOD, {
+  section = Section.build,
+  --- Taugliche Rangierloks: Zug-ID → Rangierdepot (unit). Kopie.
+  get_shunters = function()
+    local copy = {}
+    for id, unit in pairs(storage.shunters) do copy[id] = unit end
+    return copy
+  end,
+})
+
+script.on_init(function()
+  Setup.storage()
+  Setup.register()
+  Setup.listen()
+end)
+
+script.on_configuration_changed(function()
+  Setup.storage()
+  Setup.register()
+end)
+
+script.on_load(function()
+  Setup.listen()
+  Worker.resume()
+end)
+
+script.on_event(defines.events.on_gui_selection_state_changed, Section.changed)

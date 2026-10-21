@@ -1,5 +1,10 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 2026-10-21
+  Features:
+    - New UTL station roles: wagon yard, shunting depot, turnaround.
+    - Wagon yard: trains leave all wagons behind their locomotives and pick up the wagons waiting ahead of them, then carry on with their schedule. Mode per station: leave and pick up, only leave, only pick up.
+    - Every coupling is announced to UTL, so deliveries and schedules survive it.
+    - Shunting depot checks that shunting locomotives drive both ways.
   Info:
-    - First skeleton: checks the UTL add-on API. Nothing is coupled yet.
+    - No timers while nothing is being shunted.

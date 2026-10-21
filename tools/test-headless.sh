@@ -14,6 +14,9 @@ mkdir -p "$WORK/mods" "$WORK/data"
 ln -s "$MOD_DIR" "$WORK/mods/UTLCouplingYard"
 ln -s "$MODS/UTLogistics" "$WORK/mods/UTLogistics"
 for dep in "$MODS"/flib_*.zip; do ln -s "$(realpath "$dep")" "$WORK/mods/$(basename "$dep")"; done
+# SELFTEST=1: Selbsttest-Mod dazu (baut eigene Strecken und prüft An-/Abkuppeln), z. B.
+#   SELFTEST=1 tools/test-headless.sh base/freeplay 200
+[ -n "${SELFTEST:-}" ] && ln -s "$MOD_DIR/tools/selftest/ucy-selftest_0.0.1" "$WORK/mods/ucy-selftest"
 printf '[path]\nread-data=__PATH__executable__/../../data\nwrite-data=%s/data\n' "$WORK" > "$WORK/config.ini"
 cat > "$WORK/server.json" <<'JSON'
 { "name": "ucy", "description": "", "tags": [], "max_players": 2, "visibility": { "public": false, "lan": false },
