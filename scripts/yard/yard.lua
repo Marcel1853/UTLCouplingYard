@@ -147,7 +147,18 @@ function Yard.process(entry)
   if mode ~= "drop" and not pushed then
     local target = find_ahead(train, head, fx, fy)
     if target then
-      Crawl.start(head, target, fx, fy, nil, { had_delivery = Relay.has_delivery(train) })
+      local info = { had_delivery = Relay.has_delivery(train) }
+      if settings.global["ucy-crawl"].value then
+        Crawl.start(head, target, fx, fy, nil, info)
+        return
+      end
+      -- ohne Heranfahren: Der Zug steht direkt an den Wagen (Haltestelle wie in der Blaupause) – sofort kuppeln
+      local ids = Couple.announce(head, target)
+      local joined = Couple.try(head, Geometry.ahead(head, fx, fy), target)
+      train = joined or (head and head.train) or train
+      Couple.finish(ids, train)
+      if not joined then warn(stop, "warn-not-touching") end
+      Yard.release(train, info)
       return
     end
   end

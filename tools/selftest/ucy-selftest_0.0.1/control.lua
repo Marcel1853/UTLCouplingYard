@@ -72,8 +72,8 @@ local function build()
   yard(stop(s, "B-Hof", 0, 21, true), "pickup")
   stop(s, "B-Ende", 80, 21)
   t.b_loco = stock(s, "locomotive", -40, 21)
-  t.b_x1 = stock(s, "cargo-wagon", 12, 21)
-  t.b_x2 = stock(s, "cargo-wagon", 19, 21)
+  t.b_x1 = stock(s, "cargo-wagon", 3.7, 21) -- direkt am Halt (wie in Marcels Blaupause)
+  t.b_x2 = stock(s, "cargo-wagon", 10.7, 21)
   run(t.b_loco, { "B-Hof", "B-Ende" })
   -- C: tauschen
   rail(s, 41)
@@ -81,7 +81,7 @@ local function build()
   stop(s, "C-Ende", 80, 41)
   t.c_loco = stock(s, "locomotive", -40, 41)
   t.c_w = stock(s, "cargo-wagon", -47, 41)
-  t.c_x = stock(s, "cargo-wagon", 12, 41)
+  t.c_x = stock(s, "cargo-wagon", 3.7, 41)
   run(t.c_loco, { "C-Hof", "C-Ende" })
   -- D: Rangierdepots, je ein Gleis
   for i, both in ipairs({ true, false }) do
@@ -145,7 +145,7 @@ local function build()
   local relay = stop(s, "H-Hof", 0, y, true, true)
   yard(relay, "drop")
   remote.call("utl", "set_station_data", relay.unit_number, MOD, "relay", 1)
-  yard(stop(s, "H-Abhol", 8, y, true), "pickup")
+  yard(stop(s, "H-Abhol", 14, y, true), "pickup") -- Zug hält direkt am abgestellten Wagen
   -- I: Übergabe auf einem Gleis
   local iy = 161
   rail(s, iy)

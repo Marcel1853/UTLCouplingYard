@@ -83,8 +83,8 @@ LANES.pickup = {
   end,
   spawn = function(s, y, d)
     d.loco = Common.stock(s, "locomotive", -100, y)
-    fill(Common.stock(s, "cargo-wagon", 14, y))
-    fill(Common.stock(s, "cargo-wagon", 21, y))
+    fill(Common.stock(s, "cargo-wagon", 3.7, y)) -- direkt am Halt
+    fill(Common.stock(s, "cargo-wagon", 10.7, y))
     drive(d.loco, { "Abholen", "Abholen-Ende" })
   end,
   done = function(d) return at(d.loco, "Abholen-Ende") end,
@@ -101,7 +101,7 @@ LANES.swap = {
   spawn = function(s, y, d)
     d.loco = Common.stock(s, "locomotive", -100, y)
     fill(Common.stock(s, "cargo-wagon", -107, y))
-    Common.stock(s, "cargo-wagon", 14, y)
+    Common.stock(s, "cargo-wagon", 3.7, y)
     drive(d.loco, { "Tauschen", "Tauschen-Ende" })
   end,
   done = function(d) return at(d.loco, "Tauschen-Ende") end,
@@ -137,7 +137,7 @@ LANES.relay = {
     d.req = req.unit_number
     local relay = Common.stop(s, "Staffel-Übergabe", 0, y, true)
     yard(relay, "drop", { relay = 1 })
-    yard(Common.stop(s, "Staffel-Abholen", 10, y), "pickup")
+    yard(Common.stop(s, "Staffel-Abholen", 14, y), "pickup") -- Zug hält direkt am abgestellten Wagen
     Common.sign(relay, "relay")
     Common.sign(prov, "relay-provider")
     Common.sign(req, "relay-requester")
