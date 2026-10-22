@@ -161,7 +161,41 @@ LANES.relay = {
   done = function(d) return d.completed end,
 }
 
-local ORDER = { "drop", "pickup", "swap", "relay" }
+-- Übergabe auf einem Gleis (Marcels Blaupause): zwei Halte gegenüber in der Mitte. Zug A schiebt die
+-- Wagen von Westen heran, kuppelt ab und fährt rückwärts zurück; danach kommt Zug B von Osten, kuppelt an
+-- und zieht sie nach Osten. Beide Züge haben Loks in beide Richtungen.
+LANES.handover = {
+  build = function(s, y)
+    Common.rail(s, y, X1, X2)
+    local east = Common.stop(s, "Übergabe-Ost", 0, y)
+    yard(east, "swap")
+    yard(Common.stop(s, "Übergabe-West", 0, y, true), "swap")
+    Common.stop(s, "Übergabe-West-Ende", -140, y, true, false)
+    Common.stop(s, "Übergabe-Ost-Ende", 140, y, false, false)
+    Common.sign(east, "handover")
+  end,
+  spawn = function(s, y, d)
+    d.wagon = Common.stock(s, "cargo-wagon", -40, y)
+    fill(d.wagon)
+    fill(Common.stock(s, "cargo-wagon", -47, y))
+    d.loco = Common.stock(s, "locomotive", -54, y)
+    Common.stock(s, "locomotive", -61, y, true)
+    d.second = nil
+    drive(d.loco, { "Übergabe-Ost", "Übergabe-West-Ende" })
+  end,
+  tick = function(s, y, d)
+    if d.second or not (d.wagon.valid and d.wagon.train) then return end
+    local locos = d.wagon.train.locomotives
+    if #locos.front_movers + #locos.back_movers == 0 and at(d.loco, "Übergabe-West-Ende") then
+      d.second = Common.stock(s, "locomotive", 50, y, true)
+      Common.stock(s, "locomotive", 57, y)
+      drive(d.second, { "Übergabe-West", "Übergabe-Ost-Ende" })
+    end
+  end,
+  done = function(d) return d.second ~= nil and at(d.second, "Übergabe-Ost-Ende") end,
+}
+
+local ORDER = { "drop", "pickup", "swap", "handover", "relay" }
 
 --- Strecken bauen (einmal) und die erste Runde starten. `y0` = Höhe der ersten Strecke.
 function Demos.build(surface, y0)
@@ -189,7 +223,10 @@ function Demos.tick(surface)
   for key, d in pairs(storage.demos or {}) do
     local lane = LANES[key]
     if lane.tick then lane.tick(surface, d.y, d) end
-    if not d.finished and lane.done(d) then d.finished = game.tick end
+    if not d.finished and lane.done(d) then
+      d.finished = game.tick
+      log("[UCY-SZENARIO] Vorführung " .. key .. " fertig (" .. math.floor(game.tick / 60) .. " s)")
+    end
     if d.finished and game.tick - d.finished > PAUSE then reset(surface, d) end
   end
 end
