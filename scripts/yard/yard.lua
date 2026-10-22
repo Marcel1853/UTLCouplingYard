@@ -8,6 +8,7 @@ local Crawl = require("scripts.coupling.crawl")
 local Geometry = require("scripts.coupling.geometry")
 local Groups = require("scripts.shunting.groups")
 local Relay = require("scripts.yard.relay")
+local Gate = require("scripts.yard.gate")
 
 local Yard = {}
 
@@ -27,12 +28,15 @@ function Yard.arrived(event)
   if event.job_id then return false end -- Aufträge (auch eigene Rangierfahrten) nicht anfassen
   if not remote.call("utl", "hold_train", train.id, Const.MOD) then return false end
   train.manual_mode = true
-  storage.queue[#storage.queue + 1] = { ref = train.front_stock, stop = stop, unit = event.station }
+  local schedule = train.get_schedule()
+  storage.queue[#storage.queue + 1] = { ref = train.front_stock, stop = stop, unit = event.station,
+    current = schedule and schedule.current } -- beim Kuppeln setzt Factorio den Fahrplan-Zeiger zurück
   return true
 end
 
---- Zug weiterschicken: nächster Halt im Fahrplan, automatisch, bei UTL freigeben. Lok nach einer
---- Übergabe → Heimatdepot; hat der Zug gerade eine Lieferung übernommen, hat UTL die Halte schon gesetzt.
+--- Zug weiterschicken: nächster Halt im Fahrplan (gezählt ab dem Halt bei der Ankunft, `info.current`),
+--- automatisch, bei UTL freigeben. Lok nach einer Übergabe → Heimatdepot; hat der Zug gerade eine
+--- Lieferung übernommen, hat UTL die Halte schon gesetzt.
 function Yard.release(train, info)
   if not (train and train.valid) then return end
   for _, c in pairs(train.carriages) do
@@ -41,18 +45,21 @@ function Yard.release(train, info)
       storage.homeward[c.unit_number] = nil
       Relay.send_home(train, depot)
       remote.call("utl", "release_train", train.id)
+      Gate.refresh()
       return
     end
   end
   if info and not info.had_delivery and Relay.has_delivery(train) then
     train.manual_mode = false
     remote.call("utl", "release_train", train.id)
+    Gate.refresh()
     return
   end
   local schedule = train.get_schedule()
   local count = schedule and schedule.get_record_count() or 0
   if count > 0 then
-    local current = schedule.current
+    local current = info and info.current or schedule.current
+    if current > count then current = count end
     local record = schedule.get_record({ schedule_index = current })
     if record and record.temporary then
       schedule.remove_record({ schedule_index = current })
@@ -65,6 +72,7 @@ function Yard.release(train, info)
   end
   train.manual_mode = false
   remote.call("utl", "release_train", train.id)
+  Gate.refresh()
 end
 
 --- Alle Wagen abkuppeln (`to_wagons`: UTL-Lieferung bleibt bei den Wagen).
@@ -125,8 +133,9 @@ function Yard.process(entry)
   local train = entry.ref.valid and entry.ref.train
   if not train then return end
   local stop = entry.stop
+  local info = { current = entry.current }
   if not (stop.valid and Registry.role(entry.unit) == Const.ROLE.yard) then
-    Yard.release(train)
+    Yard.release(train, info)
     return
   end
   local mode = Registry.mode(entry.unit)
@@ -147,7 +156,7 @@ function Yard.process(entry)
   if mode ~= "drop" and not pushed then
     local target = find_ahead(train, head, fx, fy)
     if target then
-      local info = { had_delivery = Relay.has_delivery(train) }
+      info.had_delivery = Relay.has_delivery(train)
       if settings.global["ucy-crawl"].value then
         Crawl.start(head, target, fx, fy, nil, info)
         return
@@ -162,7 +171,7 @@ function Yard.process(entry)
       return
     end
   end
-  Yard.release(train)
+  Yard.release(train, info)
 end
 
 return Yard

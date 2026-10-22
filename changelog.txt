@@ -10,6 +10,8 @@ Date: 2026-10-21
     - Shunting picks a free target track among wagon yards with the same name and pushes the wagons in (via a turnaround if needed).
     - Relay: signal "Relay" with value N at a requester or provider routes its deliveries via the wagon yard with relay number N. The delivery stays with the wagons; the next train picking them up delivers it.
     - Wagon yard: a train that pushes its wagons in leaves them there and backs off (needs a locomotive facing backwards). Handover on a single track with two stops facing each other.
+    - Wagon yard: "Control train limit" – the stop sets its train limit to 0 while wagons block it (leave) or none wait ahead (pick up).
+    - Map setting "Wagon yard: move up to waiting wagons" (default off): without it, trains couple only when they stop right at the wagons.
     - Wagons already standing at a wagon yard are registered when the mod starts (remote function "scan").
     - Scenario "UTL Coupling Yard – shunting yard": large shunting yard with real loading and unloading, demo tracks.
   Info:

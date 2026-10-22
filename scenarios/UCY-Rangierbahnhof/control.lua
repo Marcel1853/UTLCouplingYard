@@ -3,6 +3,7 @@
 --- haben sich UTL und UTL Coupling Yard angemeldet.
 local Yard = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/yard")
 local Demos = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/demos")
+local BigLine = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/bigline")
 
 local SURFACE = "ucy-rangierbahnhof"
 
@@ -44,9 +45,12 @@ local function setup()
   local force = game.forces["player"]
   force.research_all_technologies()
   local center, bottom = Yard.build(s, { 0, 0 })
-  Demos.build(s, math.floor(bottom) + 31)
+  local last = Demos.build(s, math.floor(bottom) + 31)
+  s.request_to_generate_chunks({ 0, last + 60 }, 20)
+  s.force_generate_chunk_requests()
+  BigLine.build(s, last + 60)
   storage.start = { x = center.x, y = center.y + 10 }
-  force.chart(s, { { -200, -160 }, { 200, 120 } })
+  force.chart(s, { { -600, -160 }, { 600, last + 100 } })
   listen()
   script.on_nth_tick(60, tick)
   for _, player in pairs(game.players) do place(player) end

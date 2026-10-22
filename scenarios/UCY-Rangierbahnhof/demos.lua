@@ -197,7 +197,8 @@ LANES.handover = {
 
 local ORDER = { "drop", "pickup", "swap", "handover", "relay" }
 
---- Strecken bauen (einmal) und die erste Runde starten. `y0` = Höhe der ersten Strecke.
+--- Strecken bauen (einmal) und die erste Runde starten. `y0` = Höhe der ersten Strecke. Liefert die Höhe
+--- der letzten.
 function Demos.build(surface, y0)
   if y0 % 2 == 0 then y0 = y0 + 1 end -- Gleise liegen auf ungeraden Höhen
   storage.demos = {}
@@ -208,6 +209,7 @@ function Demos.build(surface, y0)
     LANES[key].spawn(surface, y, d)
     storage.demos[key] = d
   end
+  return y0 + (#ORDER - 1) * 24
 end
 
 local function reset(surface, d)

@@ -12,10 +12,12 @@ Wählbar im UTL-Stationsfenster, unter den UTL-Rollen.
 
 - **Wagenbahnhof** – ein Zug hält hier,
   - **stellt** alle Wagen hinter seinen Loks **ab**,
-  - **holt** die Wagen **ab**, die vor ihm warten (bis 40 Kacheln): Er fährt langsam vor und kuppelt sie an,
+  - **holt** die Wagen **ab**, die direkt vor ihm warten, und kuppelt sie an (Haltestelle so setzen, dass der Zug
+    an den Wagen hält; Karteneinstellung „an wartende Wagen heranfahren“ lässt ihn bis 40 Kacheln langsam vorfahren),
   - und fährt dann mit seinem Fahrplan weiter. Wartebedingungen spielen an diesem Halt keine Rolle.
 
-  Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen.
+  Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen. **Zuglimit steuern**: Kein Zug kommt,
+  solange dort noch Wagen stehen, wo er halten würde (abstellen), bzw. bis Wagen vor dem Halt warten (abholen).
 - **Rangierdepot** – Depot für Rangierloks. UTL vermittelt sie nie. Eine Rangierlok muss in beide Richtungen
   fahren: mindestens eine Lok je Richtung (z. B. eine nach links, eine nach rechts). Ohne Fahrplan bekommt sie das
   Depot als einzigen Halt.
@@ -45,7 +47,9 @@ Depot. Der nächste Zug, der die Wagen an einem Wagenbahnhof abholt, bringt die 
 ## Szenario
 
 „UTL Coupling Yard – Rangierbahnhof“ (Neues Spiel → Szenarien): großer Rangierbahnhof mit Greifarmen, die be- und
-entladen, dazu Vorführstrecken für Abstellen, Abholen, Tauschen und die Staffel.
+entladen, Vorführstrecken für Abstellen, Abholen, Tauschen, Übergabe auf einem Gleis und die Staffel, dazu eine
+lange Strecke: Erzmine – Wagenbahnhof mit Voll- und Leer-Gleis – Entladebahnhof, an dem der Erzzug volle gegen
+leere Wagen tauscht.
 
 ## Tipps
 

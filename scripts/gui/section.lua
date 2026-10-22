@@ -33,6 +33,8 @@ local function yard(flow, unit)
   field = row.add({ type = "textfield", text = relay > 0 and tostring(relay) or "", numeric = true,
     tags = { ucy_relay = unit }, tooltip = { "utl-coupling-yard.relay-tooltip" } })
   field.style.width = 60
+  flow.add({ type = "checkbox", state = Registry.gate(unit), caption = { "utl-coupling-yard.gate" },
+    tooltip = { "utl-coupling-yard.gate-tooltip" }, tags = { ucy_gate = unit } })
 end
 
 --- Rückruf von UTL beim Öffnen des Stationsfensters.
@@ -59,6 +61,7 @@ function Section.changed(event)
   local tags = element.tags
   if tags.ucy_mode then
     Registry.set_mode(tags.ucy_mode, Const.MODES[element.selected_index] or Const.MODES[1])
+    Section.on_gate(tags.ucy_mode)
   elseif tags.ucy_when then
     set(tags.ucy_when, "shunt_when", Const.WHEN[element.selected_index] or Const.WHEN[1])
   end
@@ -76,5 +79,17 @@ function Section.text(event)
     set(tags.ucy_relay, "relay", n and n > 0 and math.floor(n) or nil)
   end
 end
+
+--- Ereignis on_gui_checked_state_changed: „Zuglimit steuern“.
+function Section.checked(event)
+  local element = event.element
+  local unit = element.valid and element.tags.ucy_gate
+  if not unit then return end
+  set(unit, "gate", element.state or nil)
+  Section.on_gate(unit)
+end
+
+--- Wird gesetzt (control.lua): Sperre neu bewerten.
+Section.on_gate = function(unit) end
 
 return Section

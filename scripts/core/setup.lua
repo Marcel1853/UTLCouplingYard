@@ -30,6 +30,7 @@ function Setup.storage()
   storage.relayed = storage.relayed or {}     -- Lieferungs-ID → Staffel-Halt schon eingefügt
   storage.parked = storage.parked or {}       -- Wagenbahnhof (unit) → dort abgestellter Verband
   storage.reserved = storage.reserved or {}   -- Wagenbahnhof (unit) → Rangierlok ist mit Wagen dorthin unterwegs
+  storage.gated = storage.gated or {}         -- Wagenbahnhof (unit) → Zuglimit wird vom Mod gesteuert
 end
 
 local function role(name, extra)

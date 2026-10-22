@@ -72,6 +72,12 @@ function Registry.shunt(unit)
   return to, Const.WHEN[1]
 end
 
+--- Steuert der Mod das Zuglimit dieses Wagenbahnhofs?
+function Registry.gate(unit)
+  local data = remote.call("utl", "get_station_data", unit, Const.MOD) --[[@as table?]]
+  return data ~= nil and data.gate == true
+end
+
 --- Staffel-Nummer des Wagenbahnhofs (0 = keine).
 function Registry.relay(unit)
   local data = remote.call("utl", "get_station_data", unit, Const.MOD) --[[@as table?]]

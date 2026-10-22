@@ -12,10 +12,12 @@ Pick them in the UTL station window, below the UTL roles.
 
 - **Wagon yard** – a train stops here and
   - **leaves** all wagons behind its locomotives,
-  - **picks up** the wagons waiting ahead of it (up to 40 tiles): it moves slowly forward and couples them,
+  - **picks up** the wagons waiting right ahead of it and couples them (place the stop so the train stops at the
+    wagons; map setting "move up to waiting wagons" lets it move up to 40 tiles slowly),
   - then carries on with its schedule. Wait conditions at this stop do not matter.
 
-  Mode per station: leave and pick up, only leave, only pick up.
+  Mode per station: leave and pick up, only leave, only pick up. **Control train limit**: no train comes while
+  wagons still stand where it would stop (leave), or until wagons wait ahead of the stop (pick up).
 - **Shunting depot** – depot for shunting locomotives. UTL never dispatches them. A shunting locomotive must drive
   both ways: at least one locomotive per direction (e.g. one facing left, one facing right). Without a schedule it
   gets the depot as its only stop.
@@ -45,7 +47,9 @@ at a wagon yard takes the delivery on to the requester.
 ## Scenario
 
 "UTL Coupling Yard – shunting yard" (new game → scenarios): a large shunting yard with inserters loading and
-unloading, plus demo tracks for leaving, picking up, swapping and the relay.
+unloading, demo tracks for leaving, picking up, swapping, handover on one track and the relay, and a long line: ore
+mine – wagon yard with a full and an empty track – unloading station, where the ore train swaps full wagons for
+empty ones.
 
 ## Tips
 

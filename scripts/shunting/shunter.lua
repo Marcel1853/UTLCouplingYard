@@ -9,6 +9,7 @@ local Registry = require("scripts.stations.registry")
 local Couple = require("scripts.coupling.couple")
 local Crawl = require("scripts.coupling.crawl")
 local Groups = require("scripts.shunting.groups")
+local Gate = require("scripts.yard.gate")
 
 local Shunter = {}
 
@@ -166,6 +167,7 @@ function Shunter.coupled(task, train, ok)
     home(train)
     return
   end
+  Gate.refresh()
   if not deliver(task, train) then
     storage.reserved[task.to] = nil
     warn(Registry.stop(task.to), "warn-unreachable")
@@ -224,6 +226,7 @@ function Shunter.arrived(event)
   storage.reserved[task.to] = nil
   if wagons then Groups.add(task.to, wagons) end
   home(loco or train)
+  Gate.refresh()
   Shunter.assign()
   return true
 end
