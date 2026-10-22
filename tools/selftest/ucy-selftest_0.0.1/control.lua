@@ -9,6 +9,9 @@
 --   G  Rangierlok: an der Ladebucht warten die Wagen auf „leer“ (Test entlädt), dann zurück ins Lager
 --   H  Staffel: UTL-Lieferung hält am Staffel-Bahnhof (Signal am Abnehmer), Wagen bleiben mit der
 --      Lieferung stehen, Lok fährt ins Depot, ein zweiter Zug holt die Wagen und liefert sie aus
+--   I  Übergabe auf einem Gleis (Marcels Blaupause): zwei Halte gegenüber in der Mitte. Zug A schiebt die
+--      Wagen von Westen heran, kuppelt ab und fährt rückwärts zurück; Zug B kommt von Osten, kuppelt an und
+--      zieht sie nach Osten
 local MOD = "UTLCouplingYard"
 local CY = "ucy-selftest"
 
@@ -143,6 +146,18 @@ local function build()
   yard(relay, "drop")
   remote.call("utl", "set_station_data", relay.unit_number, MOD, "relay", 1)
   yard(stop(s, "H-Abhol", 8, y, true), "pickup")
+  -- I: Übergabe auf einem Gleis
+  local iy = 161
+  rail(s, iy)
+  yard(stop(s, "I-Ost", 0, iy, true), "swap")
+  yard(stop(s, "I-West", 0, iy, true, true), "swap")
+  stop(s, "I-West-Ende", -90, iy, false, true)
+  stop(s, "I-Ost-Ende", 90, iy)
+  t.i_w1 = stock(s, "cargo-wagon", -40, iy)
+  t.i_w2 = stock(s, "cargo-wagon", -47, iy)
+  t.i_a = stock(s, "locomotive", -54, iy, 4)
+  stock(s, "locomotive", -61, iy, 12)
+  run(t.i_a, { "I-Ost", "I-West-Ende" })
   t.h_w = stock(s, "cargo-wagon", -46, y)
   stock(s, "locomotive", -53, y, 4)
   t.h_a = stock(s, "locomotive", -60, y, 12)
@@ -262,12 +277,27 @@ script.on_nth_tick(60, function()
     check("H Staffel: zweiter Zug hat mit dem Wagen ausgeliefert", t.h_b ~= nil and hw.valid and hw.train == t.h_b.train,
       serpent.line({ abbruch = storage.h_canceled }))
   end
-  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h) or game.tick > 60 * 300 then
+  -- I: Wagen ohne Lok in der Mitte, Loks von A zurück → Zug B einsetzen
+  local iw = t.i_w1
+  if not s.i_dropped and iw.valid and iw.train and #iw.train.carriages == 2 and at(t.i_a, "I-West-Ende") then
+    s.i_dropped = true
+    check("I Übergabe: A hat geschoben abgestellt und ist rückwärts zurück", #t.i_a.train.carriages == 2
+      and iw.position.x < 0 and iw.position.x > -20, "Wagen x " .. math.floor(iw.position.x))
+    t.i_b = stock(game.surfaces[CY], "locomotive", 50, 161, 12)
+    stock(game.surfaces[CY], "locomotive", 57, 161, 4)
+    run(t.i_b, { "I-West", "I-Ost-Ende" })
+  end
+  if t.i_b and not s.i and at(t.i_b, "I-Ost-Ende") then
+    s.i = true
+    check("I Übergabe: B hat die Wagen angekuppelt und nach Osten gezogen",
+      iw.valid and iw.train == t.i_b.train and #t.i_b.train.carriages == 4)
+  end
+  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h and s.i) or game.tick > 60 * 300 then
     storage.done = true
     local r = storage.rebuilt or { yes = 0, no = 0 }
     check("E Umbauten bei UTL angemeldet", r.no == 0, "angemeldet " .. r.yes .. ", unangemeldet " .. r.no)
     if storage.h_canceled then check("H Lieferung abgebrochen: " .. tostring(storage.h_canceled), false) end
-    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h" }) do
+    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h", "i" }) do
       if not s[k] then check(string.upper(k) .. " nicht angekommen", false) end
     end
     local bad = 0

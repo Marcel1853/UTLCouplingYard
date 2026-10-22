@@ -51,7 +51,7 @@ unloading, plus demo tracks for leaving, picking up, swapping and the relay.
 
 - Build stops on the right-hand side in the direction of travel, as usual.
 - Leave room ahead of a wagon yard for waiting wagons, and use rail signals so trains do not run into parked wagons.
-- A train arriving with its wagons first (pushed) keeps them coupled.
+- Handover on a single track: two stops facing each other at the same spot. One train pushes the wagons up to its stop, uncouples and backs off; the other comes from the opposite side, couples and pulls them away. Both need locomotives facing both ways.
 - UTL does not send shunting locomotives to refuel: give them plenty of fuel or a "fuel low" interrupt.
 
 ## Performance

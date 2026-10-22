@@ -52,7 +52,7 @@ entladen, dazu Vorführstrecken für Abstellen, Abholen, Tauschen und die Staffe
 - Haltestellen wie gewohnt rechts in Fahrtrichtung bauen.
 - Vor einem Wagenbahnhof Platz für wartende Wagen lassen und Signale setzen, damit Züge nicht auf abgestellte Wagen
   fahren.
-- Kommt ein Zug mit den Wagen voran (geschoben), bleiben sie angekuppelt.
+- Übergabe auf einem Gleis: zwei Haltestellen gegenüber an derselben Stelle. Ein Zug schiebt die Wagen bis zu seinem Halt, kuppelt ab und fährt rückwärts weg; der andere kommt von der Gegenseite, kuppelt an und zieht sie weg. Beide brauchen Loks in beide Richtungen.
 - UTL schickt Rangierloks nicht zum Tanken: viel Brennstoff mitgeben oder eine Unterbrechung „Brennstoff niedrig“.
 
 ## Leistung

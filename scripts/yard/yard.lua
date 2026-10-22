@@ -67,32 +67,40 @@ function Yard.release(train, info)
   remote.call("utl", "release_train", train.id)
 end
 
---- Alle Wagen hinter dem Lok-Block am Kopf abkuppeln (`to_wagons`: UTL-Lieferung bleibt bei den Wagen).
---- Liefert den Zug, der weiterfährt, und die abgestellten Wagen (Zug) oder nil.
+--- Alle Wagen abkuppeln (`to_wagons`: UTL-Lieferung bleibt bei den Wagen).
+---   Lok vorn: alles hinter dem Lok-Block am Kopf bleibt stehen, die Loks fahren vorwärts weiter.
+---   Wagen vorn (geschoben): die Wagen am Kopf bleiben stehen, die Loks fahren rückwärts weg.
+--- Liefert den Zug, der weiterfährt, die abgestellten Wagen (Zug) oder nil, und ob geschoben wurde.
 local function drop(train, head, stop, fx, fy, to_wagons)
   local carriages = train.carriages
   local first, step = 1, 1
   if carriages[1] ~= head then first, step = #carriages, -1 end
-  local last_loco
+  local last = #carriages - first + 1
+  local pushed = head.type ~= "locomotive"
+  -- Block am Kopf: Loks (Lok vorn) bzw. Wagen (geschoben)
+  local edge
+  for i = first, last, step do
+    if (carriages[i].type == "locomotive") == pushed then break end
+    edge = i
+  end
+  local next_i = edge + step
+  if next_i < 1 or next_i > #carriages then return train, nil, false end -- nur Loks bzw. Wagen: nichts abzustellen
+  -- Wegfahren: Lok vorn → eine Lok im Kopf-Block zeigt nach vorn; geschoben → eine Lok dahinter nach hinten
   local can_leave = false
-  for i = first, #carriages - first + 1, step do
+  local from, to, dx, dy = first, edge, fx, fy
+  if pushed then from, to, dx, dy = next_i, last, -fx, -fy end
+  for i = from, to, step do
     local c = carriages[i]
-    if c.type ~= "locomotive" then break end
-    last_loco = i
-    if Geometry.faces(c, fx, fy) then can_leave = true end
+    if c.type == "locomotive" and Geometry.faces(c, dx, dy) then can_leave = true end
   end
-  if not last_loco then
-    warn(stop, "warn-no-loco-ahead")
-    return train
-  end
-  local next_i = last_loco + step
-  if next_i < 1 or next_i > #carriages then return train end -- nur Loks: nichts abzustellen
   if not can_leave then
-    warn(stop, "warn-cannot-leave")
-    return train
+    warn(stop, pushed and "warn-cannot-back" or "warn-cannot-leave")
+    return train, nil, false
   end
-  local kept, rest = Couple.split(carriages[last_loco], carriages[next_i], to_wagons)
-  return kept or train, rest
+  local keep, other = carriages[edge], carriages[next_i]
+  if pushed then keep, other = other, keep end
+  local kept, rest = Couple.split(keep, other, to_wagons)
+  return kept or train, rest, pushed
 end
 
 --- Nächster Wagen vor dem Kopf des Zuges (höchstens Const.SEARCH Kacheln). Einmalige kleine Suche je
@@ -124,17 +132,19 @@ function Yard.process(entry)
   local mode = Registry.mode(entry.unit)
   local fx, fy = Geometry.forward(stop)
   local head = Geometry.ends(train, stop)
+  local pushed = false
   if mode ~= "pickup" then
     local home = Relay.handover(train, entry.unit)
     local rest
-    train, rest = drop(train, head, stop, fx, fy, home ~= nil)
+    train, rest, pushed = drop(train, head, stop, fx, fy, home ~= nil)
     head = Geometry.ends(train, stop)
     if rest then
       Groups.add(entry.unit, rest, home ~= nil)
       if home then storage.homeward[train.carriages[1].unit_number] = home end
     end
   end
-  if mode ~= "drop" then
+  -- Gerade geschoben abgestellte Wagen stehen vor dem Zug – nicht gleich wieder ankuppeln.
+  if mode ~= "drop" and not pushed then
     local target = find_ahead(train, head, fx, fy)
     if target then
       Crawl.start(head, target, fx, fy, nil, { had_delivery = Relay.has_delivery(train) })
