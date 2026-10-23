@@ -1,0 +1,9 @@
+{
+  "name": "ucy-mapdump",
+  "version": "0.0.1",
+  "title": "UTL Coupling Yard – Kartenauszug",
+  "author": "Marcel171297",
+  "factorio_version": "2.1",
+  "description": "Nur für Headless-Tests, wird nicht veröffentlicht: schreibt Gleise, Signale, Halte und Züge in script-output.",
+  "dependencies": ["base >= 2.1.0"]
+}

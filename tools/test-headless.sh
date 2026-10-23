@@ -17,6 +17,8 @@ for dep in "$MODS"/flib_*.zip; do ln -s "$(realpath "$dep")" "$WORK/mods/$(basen
 # SELFTEST=1: Selbsttest-Mod dazu (baut eigene Strecken und prüft An-/Abkuppeln), z. B.
 #   SELFTEST=1 tools/test-headless.sh base/freeplay 200
 [ -n "${SELFTEST:-}" ] && ln -s "$MOD_DIR/tools/selftest/ucy-selftest_0.0.1" "$WORK/mods/ucy-selftest"
+# MAPDUMP=1: Kartenauszug alle 30 s bis Minute 6 in $WORK/data/script-output/ (Bilder: tools/render-map.py)
+[ -n "${MAPDUMP:-}" ] && ln -s "$MOD_DIR/tools/mapdump/ucy-mapdump_0.0.1" "$WORK/mods/ucy-mapdump"
 printf '[path]\nread-data=__PATH__executable__/../../data\nwrite-data=%s/data\n' "$WORK" > "$WORK/config.ini"
 cat > "$WORK/server.json" <<'JSON'
 { "name": "ucy", "description": "", "tags": [], "max_players": 2, "visibility": { "public": false, "lan": false },
