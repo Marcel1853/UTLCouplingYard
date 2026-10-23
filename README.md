@@ -51,6 +51,10 @@ unloading, demo tracks for leaving, picking up, swapping, handover on one track 
 mine – wagon yard with a full and an empty track – unloading station, where the ore train swaps full wagons for
 empty ones.
 
+"UTL Coupling Yard – large network": a network of its own with 4 × 3 roundabouts, double-track lines and signals,
+34 UTL stations and 36 UTL trains running deliveries. Two ore trains travel with them across the network from the ore
+mine to the wagon yard and swap full wagons for empty ones there.
+
 ## Tips
 
 - Build stops on the right-hand side in the direction of travel, as usual.

@@ -25,6 +25,11 @@ remote.add_interface(Const.MOD, {
     for id, unit in pairs(storage.shunters) do copy[id] = unit end
     return copy
   end,
+  --- Karteneinstellung „Heranfahren“ setzen (z. B. aus einem Szenario – das darf Mod-Einstellungen nicht selbst
+  --- ändern).
+  crawl = function(on)
+    settings.global["ucy-crawl"] = { value = on == true }
+  end,
 })
 
 script.on_init(function()
