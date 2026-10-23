@@ -26,6 +26,7 @@ Const.CRAWL_TIMEOUT = 60 * 60 -- spätestens nach einer Minute aufgeben
 Const.APPROACH = 12     -- so weit vor dem Ende eines Wagenverbands hält die Rangierlok, dann schiebt sie heran
 Const.CHECK_TICKS = 120 -- Prüftakt für Wagen, die auf „leer“/„voll“ warten (nur solange welche warten)
 Const.CHECK_BUDGET = 10 -- so viele Wagenverbände je Prüftakt
+Const.SHUNT_RANGE = 400 -- Rangierloks arbeiten nur so weit (Kacheln) von ihrem Wagenverband entfernt
 Const.NEAR = 60         -- so nah an seiner Haltestelle muss ein Verband stehen, damit das Gleis belegt ist
 
 return Const

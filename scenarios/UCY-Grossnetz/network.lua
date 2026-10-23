@@ -34,7 +34,8 @@ local function corridor_rails(F)
 end
 
 --- Signale einer Strecke; liefert ihre beiden Bahnhofsgleise (Halt, Gleispunkt am Halt, Fahrtrichtung).
-local function corridor_signals(F, sidings)
+--- `facility`: das Bahnhofsgleis nach Osten gehört einer Kuppel-Anlage im Block darunter (kein UTL-Bahnhof).
+local function corridor_signals(F, sidings, facility)
   for _, x in ipairs(BLOCKS) do
     -- nach Westen: Signal nördlich (rechts), nach Osten: südlich; Blick jeweils zum ankommenden Zug
     F:signal(false, x + 0.5, -14.5, 4)
@@ -44,20 +45,28 @@ local function corridor_signals(F, sidings)
   end
   for _, x in ipairs(WAIT) do
     F:signal(false, x, -20.5, 4)
-    F:signal(false, D - x, 20.5, 12)
+    if not facility then F:signal(false, D - x, 20.5, 12) end
   end
   sidings[#sidings + 1] = { frame = F, x = 62, y = -19, west = true }
-  sidings[#sidings + 1] = { frame = F, x = D - 62, y = 19, west = false }
+  if not facility then sidings[#sidings + 1] = { frame = F, x = D - 62, y = 19, west = false } end
 end
 
---- Netz bauen. Liefert die Bahnhofsgleise.
-function Network.build(surface, stats)
-  local kreisels, corridors = {}, {}
+--- Netz bauen. `blocks` = Liste { i, j } der Blöcke mit Kuppel-Anlage (unter der Strecke von Kreisel i, j nach
+--- Osten). Liefert die Bahnhofsgleise für UTL und die Rahmen der Anlagen (gleiche Reihenfolge wie `blocks`).
+function Network.build(surface, stats, blocks)
+  local kreisels, corridors, frames, facility = {}, {}, {}, {}
+  local wanted = {}
+  for n, b in ipairs(blocks) do wanted[b[1] .. "/" .. b[2]] = n end
   for i = 0, Network.COLS - 1 do
     for j = 0, Network.ROWS - 1 do
       local x, y = Network.center(i, j)
       kreisels[#kreisels + 1] = Frame.new(surface, x, y, 0, stats)
-      if i < Network.COLS - 1 then corridors[#corridors + 1] = Frame.new(surface, x, y, 0, stats) end
+      if i < Network.COLS - 1 then
+        local F = Frame.new(surface, x, y, 0, stats)
+        corridors[#corridors + 1] = F
+        local n = wanted[i .. "/" .. j]
+        if n then frames[n], facility[F] = F, true end
+      end
       if j < Network.ROWS - 1 then corridors[#corridors + 1] = Frame.new(surface, x, y, 1, stats) end
     end
   end
@@ -66,15 +75,8 @@ function Network.build(surface, stats)
   for _, F in ipairs(corridors) do corridor_rails(F) end
   for _, F in ipairs(kreisels) do kreisel(F, true) end
   local sidings = {}
-  for _, F in ipairs(corridors) do corridor_signals(F, sidings) end
-  return sidings
-end
-
---- Rahmen für einen Anbau am Außenarm eines Kreisels: "east" = Ostarm (Rahmen ungedreht), "west" = Westarm (halbe
---- Drehung – der Kreisel ist punktsymmetrisch, sein Westarm ist der gedrehte Ostarm).
-function Network.arm(surface, i, j, side, stats)
-  local x, y = Network.center(i, j)
-  return Frame.new(surface, x, y, side == "west" and 2 or 0, stats)
+  for _, F in ipairs(corridors) do corridor_signals(F, sidings, facility[F]) end
+  return sidings, frames
 end
 
 return Network

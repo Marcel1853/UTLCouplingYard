@@ -51,16 +51,23 @@ local function free_target(unit)
   return not storage.reserved[unit] and not Groups.occupied(unit)
 end
 
---- Zum Ende des Verbands schicken: Punkt Const.APPROACH Kacheln davor. Das nähere Ende zuerst (sonst
---- führe der Weg womöglich durch die Wagen), geht es nicht, das andere.
+local RAILS = { "straight-rail", "curved-rail-a", "curved-rail-b", "half-diagonal-rail" }
+
+local function rail_at(surface, position)
+  return surface.find_entities_filtered({ position = position, radius = 1.5, type = RAILS })[1]
+end
+
+--- Zum Ende des Verbands schicken: Punkt Const.APPROACH Kacheln davor. Welches Ende, entscheidet die Wegsuche des
+--- Spiels (ein belegter Block kostet Aufschlag – so wird nicht durch die Wagen hindurch angefahren); sonst das nähere
+--- Ende zuerst; geht es nicht, das andere. Eine Wegsuche je Auftrag.
 local function fetch(task, train)
   local wagons = task.group.wagons[1].train
   local a, b = wagons.front_stock, wagons.back_stock
   if not (a and b) then return false end
   local q = train.front_stock.position
-  local function d(e) return (e.position.x - q.x) ^ 2 + (e.position.y - q.y) ^ 2 end
-  local order = d(a) <= d(b) and { { a, b }, { b, a } } or { { b, a }, { a, b } }
-  for _, pair in ipairs(order) do
+  local reach = Const.APPROACH + 4
+  local options = {}
+  for _, pair in ipairs({ { a, b }, { b, a } }) do
     local e, other = pair[1], pair[2]
     local ux, uy = unit_vector(e.position.x - other.position.x, e.position.y - other.position.y)
     if ux == 0 and uy == 0 then -- nur ein Wagen: in Richtung des Wagens bzw. entgegen
@@ -68,9 +75,27 @@ local function fetch(task, train)
       ux, uy = math.sin(o), -math.cos(o)
       if e == b then ux, uy = -ux, -uy end
     end
-    local reach = Const.APPROACH + 4
-    local id = job(train, { { position = { x = e.position.x + ux * reach, y = e.position.y + uy * reach },
-      surface = e.surface.index, wait = WAIT } })
+    local at = { x = e.position.x + ux * reach, y = e.position.y + uy * reach }
+    options[#options + 1] = { e = e, at = at, d = (e.position.x - q.x) ^ 2 + (e.position.y - q.y) ^ 2 }
+  end
+  table.sort(options, function(x, y) return x.d < y.d end)
+  local goals, owner = {}, {}
+  for i, option in ipairs(options) do
+    local rail = rail_at(option.e.surface, option.at)
+    if rail then
+      for _, direction in pairs(defines.rail_direction) do
+        goals[#goals + 1] = { rail = rail, direction = direction }
+        owner[#goals] = i
+      end
+    end
+  end
+  if #goals > 0 then
+    local result = game.train_manager.request_train_path({ train = train, goals = goals, type = "path" })
+    if result.found_path and owner[result.goal_index] == 2 then options[1], options[2] = options[2], options[1] end
+  end
+  for _, option in ipairs(options) do
+    local e = option.e
+    local id = job(train, { { position = option.at, surface = e.surface.index, wait = WAIT } })
     if id then
       task.job, task.target, task.phase = id, e, "fetch"
       storage.jobs[id] = task
@@ -97,7 +122,8 @@ function Shunter.assign()
         local train = game.train_manager.get_train_by_id(id)
         if train and train.valid and train.front_stock then
           local q = train.front_stock.position
-          list[#list + 1] = { train = train, d = (q.x - p.x) ^ 2 + (q.y - p.y) ^ 2 }
+          local d = (q.x - p.x) ^ 2 + (q.y - p.y) ^ 2
+          if d <= Const.SHUNT_RANGE ^ 2 then list[#list + 1] = { train = train, d = d } end
         else
           free[id] = nil
         end
@@ -131,7 +157,21 @@ local function pushing(task, train, stop)
   return leading ~= nil and not task.locos[leading.unit_number]
 end
 
---- Auftrag zum Ziel: direkt, wenn die Wagen dabei vorn sind; sonst über eine Wende (dort wechselt die
+--- Wende-Halte, nächste zuerst (bei mehreren Rangierbahnhöfen auf der Karte die eigene).
+local function turns(train)
+  local q = train.front_stock.position
+  local list = {}
+  for unit, role in pairs(storage.stations) do
+    local stop = role == Const.ROLE.turn and Registry.stop(unit)
+    if stop and stop.surface == train.front_stock.surface then
+      list[#list + 1] = { unit = unit, d = (stop.position.x - q.x) ^ 2 + (stop.position.y - q.y) ^ 2 }
+    end
+  end
+  table.sort(list, function(a, b) return a.d < b.d end)
+  return list
+end
+
+--- Auftrag zum Ziel: direkt, wenn die Wagen dabei vorn sind; sonst über die nächste Wende (dort wechselt die
 --- Richtung); geht beides nicht, direkt.
 local function deliver(task, train)
   local target = { station = task.to, wait = WAIT }
@@ -139,11 +179,9 @@ local function deliver(task, train)
   local id
   if stop and pushing(task, train, stop) then id = job(train, { target }) end
   if not id then
-    for unit, role in pairs(storage.stations) do
-      if role == Const.ROLE.turn and Registry.stop(unit) then
-        id = job(train, { { station = unit, wait = WAIT }, target })
-        if id then break end
-      end
+    for _, turn in ipairs(turns(train)) do
+      id = job(train, { { station = turn.unit, wait = WAIT }, target })
+      if id then break end
     end
   end
   if not id then id = job(train, { target }) end

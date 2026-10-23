@@ -1,6 +1,6 @@
 --- Szenario „UCY-Großnetz“: eigenes Netz aus Kreiseln (Marcels Blaupause „kreisel_signale“) mit UTL-Bahnhöfen und
---- rund 36 UTL-Zügen, die echte Lieferungen fahren, dazu zwei Kuppel-Anlagen, deren Erzzüge quer durch dieses Netz
---- fahren (facility.lua). Gebaut wird nach einer Sekunde – dann haben sich UTL und UTL Coupling Yard angemeldet.
+--- rund 36 UTL-Zügen, die echte Lieferungen fahren. In zwei Blöcken je eine Kuppel-Anlage (facility.lua): Erzmine und
+--- Fabrik, jede mit Übergabebahnhof und Rangierbahnhof; ein Streckenzug pendelt zwischen beiden quer durchs Netz. Gebaut wird nach einer Sekunde – dann haben sich UTL und UTL Coupling Yard angemeldet.
 local Network = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/network")
 local Stations = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/stations")
 local Facility = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/facility")
@@ -75,9 +75,12 @@ local function listen()
   script.on_event(ids.on_delivery_completed, completed)
 end
 
+-- Blöcke mit Kuppel-Anlage: Erzmine oben links, Fabrik unten rechts – der Streckenzug fährt quer durchs Netz
+local BLOCKS = { { 0, 0 }, { 2, 1 } }
+
 local function generate(surface)
-  local x1, y1 = -700, -120
-  local x2, y2 = Network.D * (Network.COLS - 1) + 700, Network.D * (Network.ROWS - 1) + 120
+  local x1, y1 = -150, -150
+  local x2, y2 = Network.D * (Network.COLS - 1) + 150, Network.D * (Network.ROWS - 1) + 150
   for x = x1, x2, 160 do
     for y = y1, y2, 160 do surface.request_to_generate_chunks({ x, y }, 3) end
   end
@@ -93,29 +96,23 @@ local function setup()
   local area = generate(surface)
   local force = game.forces["player"]
   force.research_all_technologies()
-  -- Die Halte auf beiden Seiten eines Wagenbahnhofs liegen auseinander (Signal dazwischen): heranfahren
+  -- Am Abholgleis hält der Streckenzug vor dem Signal, das die bereitgestellten Wagen abtrennt: heranfahren
   remote.call("UTLCouplingYard", "crawl", true)
   local stats = { rails_failed = 0, signals_failed = 0, signals = 0 }
-  local sidings = Network.build(surface, stats)
+  local sidings, frames = Network.build(surface, stats, BLOCKS)
   local count = Stations.build(sidings)
-  -- Anlage 1: Wagenbahnhof am Ostarm oben rechts, Erzmine am Westarm oben links; Anlage 2 um 180° gedreht
-  local last_i, last_j = Network.COLS - 1, Network.ROWS - 1
-  local frames = {
-    { Network.arm(surface, last_i, 0, "east", stats), Network.arm(surface, 0, 0, "west", stats) },
-    { Network.arm(surface, 0, last_j, "west", stats), Network.arm(surface, last_i, last_j, "east", stats) },
-  }
-  for _, f in ipairs(frames) do Facility.rails(f[1], f[2]) end
-  storage.watch = {}
-  for n, f in ipairs(frames) do
-    local made = Facility.build(f[1], f[2], n)
-    storage.watch[#storage.watch + 1] = made.a
-    storage.watch[#storage.watch + 1] = made.b
-    if n == 1 then storage.start = { x = made.center[1], y = made.center[2] + 12 } end
-    Common.sign(made.stops.erz, "ore")
-    Common.sign(made.stops.voll, "full-track")
-    Common.sign(made.stops.leer, "empty-track")
-    Common.sign(made.stops.unload, "unload")
+  for _, F in ipairs(frames) do Facility.rails(F) end
+  local mine = Facility.build(frames[1], "Erzmine", true)
+  Facility.build(frames[2], "Fabrik", false)
+  local train = Facility.train(frames[1], { "Erzmine Ankunft", "Erzmine Lokwende", "Erzmine Abfahrt",
+    "Fabrik Ankunft", "Fabrik Lokwende", "Fabrik Abfahrt" })
+  remote.call("UTLCouplingYard", "scan") -- Wagen erfassen, Sperren setzen
+  storage.watch = { train }
+  for _, F in ipairs(frames) do
+    local loco = F.surface.find_entities_filtered({ type = "locomotive", position = F:pos(183, 64), radius = 2 })[1]
+    if loco then storage.watch[#storage.watch + 1] = loco end
   end
+  storage.start = { x = mine.arrive.position.x, y = mine.arrive.position.y + 20 }
   force.chart(surface, area)
   L(("gebaut: %d Bahnhöfe (%d Depots, %d Anbieter, %d Abnehmer), %d UTL-Züge, Halte ohne Gleis %d, Signale %d, "
     .. "Gleise fehlgeschlagen %d, Signale fehlgeschlagen %d"):format(count.stations, count.depot, count.provider,

@@ -79,6 +79,38 @@ function Frame:throat(x, Y, east, only)
   end
 end
 
+-- Gleisstücke aus UTLs Lasttest (scenarios/UTL-Lasttest/track-pieces.lua, dort im Spiel ermittelt):
+-- { Name, Richtung, dx, dy } relativ zum letzten geraden Stück davor.
+-- 90°-Kurve: von Norden nach Osten; das nächste gerade Stück liegt bei (14, -14).
+local RIGHT_N = { { "curved-rail-a", 2, 0, -3 }, { "curved-rail-b", 2, 2, -8 }, { "curved-rail-b", 12, 6, -12 },
+  { "curved-rail-a", 12, 11, -14 } }
+-- Abzweig nach rechts (6 Felder versetzt, Fahrt nach Osten): Zweig gerade ab (20, 6).
+local DIVERGE_E = { { "curved-rail-a", 6, 3, 0 }, { "half-diagonal-rail", 6, 8, 2 },
+  { "half-diagonal-rail", 6, 12, 4 }, { "curved-rail-a", 14, 17, 6 } }
+-- Einmündung von rechts (Fahrt nach Osten): Zweig gerade bis (-20, 6).
+local MERGE_E = { { "curved-rail-a", 12, -3, 0 }, { "half-diagonal-rail", 4, -8, 2 },
+  { "half-diagonal-rail", 4, -12, 4 }, { "curved-rail-a", 4, -17, 6 } }
+
+--- Gleisstücke um `turns` Viertel gedreht an (x, y) setzen.
+function Frame:pieces(list, x, y, turns)
+  for _, p in ipairs(list) do
+    local dx, dy = p[3], p[4]
+    for _ = 1, turns or 0 do dx, dy = -dy, dx end
+    self:create(p[1], x + dx, y + dy, (p[2] + 4 * (turns or 0)) % 16)
+  end
+end
+
+--- 90°-Kurve. `turns` = 0: von Norden nach Osten (Ende bei +14/-14), 1: Osten → Süden, 2: Süden → Westen,
+--- 3: Westen → Norden. Rückwärts befahren ist dieselbe Kurve eine Linkskurve.
+function Frame:curve(x, y, turns) self:pieces(RIGHT_N, x, y, turns) end
+function Frame:diverge(x, y) self:pieces(DIVERGE_E, x, y, 0) end
+function Frame:merge(x, y) self:pieces(MERGE_E, x, y, 0) end
+
+--- Senkrechte Strecke bei `x` von `y1` bis `y2`.
+function Frame:vertical(x, y1, y2)
+  for y = y1, y2, 2 do self:create("straight-rail", x, y, 0) end
+end
+
 --- Haltestelle rechts vom Gleis `y` bei `x`: Fahrt nach Osten (Halt südlich) oder Westen (nördlich), im Rahmen.
 function Frame:stop(name, x, y, west, utl)
   local stop = self:create(utl and "utl-train-stop" or "train-stop", x, y + (west and -2 or 2), west and 12 or 4,

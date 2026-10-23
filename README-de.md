@@ -51,9 +51,10 @@ entladen, Vorführstrecken für Abstellen, Abholen, Tauschen, Übergabe auf eine
 lange Strecke: Erzmine – Wagenbahnhof mit Voll- und Leer-Gleis – Entladebahnhof, an dem der Erzzug volle gegen
 leere Wagen tauscht.
 
-„UTL Coupling Yard – Großnetz“: eigenes Netz aus 4 × 3 Kreiseln mit zweigleisigen Strecken und Signalen, 34
-UTL-Bahnhöfe und 36 UTL-Züge mit Lieferungen. Zwei Erzzüge fahren mit ihnen quer durchs Netz von der Erzmine zum
-Wagenbahnhof und tauschen dort volle gegen leere Wagen.
+„UTL Coupling Yard – Großnetz“: eigenes Netz aus 4 × 3 Kreiseln mit zweigleisigen Strecken und Signalen, UTL-Bahnhöfe
+und 33 UTL-Züge mit Lieferungen. In zwei Blöcken liegen eine Erzmine und eine Fabrik, jede mit Übergabebahnhof und
+Rangierbahnhof: Der Streckenzug stellt seine Wagen ab, setzt um und holt die bereitgestellten; die Rangierlok bringt
+die Wagen an die Lade- bzw. Entladegleise und zurück.
 
 ## Tipps
 

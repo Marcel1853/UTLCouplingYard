@@ -13,7 +13,8 @@ Date: 2026-10-21
     - Wagon yard: "Control train limit" – the stop sets its train limit to 0 while wagons block it (leave) or none wait ahead (pick up).
     - Map setting "Wagon yard: move up to waiting wagons" (default off): without it, trains couple only when they stop right at the wagons.
     - Wagons already standing at a wagon yard are registered when the mod starts (remote function "scan").
-    - Scenario "UTL Coupling Yard – large network": own network of 4 × 3 roundabouts with 36 UTL trains; two ore trains travel across it to a wagon yard.
+    - Scenario "UTL Coupling Yard – large network": own network of 4 × 3 roundabouts with UTL traffic; an ore mine and a factory with transfer and shunting yards, a mainline train travels between them.
+    - Shunting locomotive: uses the nearest turning stop, only works within 400 tiles, and approaches wagons from the end the train pathfinder can reach (not through the wagons' own signal block).
     - Remote function "crawl": switches the map setting "move up to waiting wagons" (for scenarios).
     - Scenario "UTL Coupling Yard – shunting yard": large shunting yard with real loading and unloading, demo tracks.
   Info:
