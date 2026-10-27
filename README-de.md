@@ -2,6 +2,10 @@
 
 *Read in English: [README.md](README.md).*
 
+> **Vorab-Beta – Testphase.** Das ist eine frühe Testversion. Funktionen, Einstellungen und Stationsdaten können sich
+> noch ändern, und manches läuft vielleicht noch nicht wie gedacht. Bitte zuerst in einem eigenen Spielstand
+> ausprobieren und Probleme oder Ideen melden.
+
 Add-on für **Unified Train Logistics (UTL)**: An- und Abkuppeln. Züge lassen Wagen an Bahnhöfen stehen,
 Rangierloks holen, bringen und stellen sie ab. Gedacht für schöne Bahnhöfe und Rollenspiel. Braucht UTLogistics
 0.0.20 oder neuer.
@@ -70,5 +74,14 @@ Kein Takt, solange nicht rangiert wird. Alles startet über UTL-Ereignisse (Zug 
 Auftrag fertig). Nur während ein Zug langsam zum Kuppeln vorfährt, läuft kurz ein Takt.
 
 Jedes Kuppeln wird bei UTL angemeldet, Lieferungen und Fahrpläne überstehen es.
+
+## Mehr
+
+So funktioniert es, Schritt für Schritt: [Wiki](https://github.com/Marcel1853/UTLCouplingYard/wiki).
+
+## Lizenz
+
+MIT (siehe LICENSE) – jeder darf diesen Mod nutzen, ändern und weiterführen. Unified Train Logistics selbst hat eine
+eigene Lizenz.
 
 Mit Hilfe von KI (Claude von Anthropic) entstanden, getestet von Marcel171297.

@@ -2,6 +2,9 @@
 
 *Auf Deutsch lesen: [README-de.md](README-de.md).*
 
+> **Pre-beta – test phase.** This is an early test version. Features, settings and station data may still change,
+> and things may not work as intended yet. Please try it in a separate save first and report problems or ideas.
+
 Add-on for **Unified Train Logistics (UTL)**: coupling and uncoupling. Trains leave wagons at stations, shunting
 locomotives fetch, bring and park them. Made for good-looking stations and role play. Requires UTLogistics 0.0.20
 or newer.
@@ -69,5 +72,13 @@ No timers while nothing is shunted. Everything starts from UTL events (train arr
 finished). Only while a train moves slowly to couple, a short timer runs.
 
 Every coupling is announced to UTL, so deliveries and schedules survive it.
+
+## More
+
+How it works, step by step: [wiki](https://github.com/Marcel1853/UTLCouplingYard/wiki).
+
+## License
+
+MIT (see LICENSE) – anyone may use, change and continue this mod. Unified Train Logistics itself has its own license.
 
 Made with the help of AI (Claude by Anthropic), tested by Marcel171297.

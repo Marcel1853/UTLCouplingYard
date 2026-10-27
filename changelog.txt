@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.1
-Date: 2026-10-21
+Date: 2026-10-27
   Features:
     - New UTL station roles: wagon yard, shunting depot, turnaround.
     - Wagon yard: trains leave all wagons behind their locomotives and pick up the wagons waiting ahead of them, then carry on with their schedule. Mode per station: leave and pick up, only leave, only pick up.
@@ -14,8 +14,10 @@ Date: 2026-10-21
     - Map setting "Wagon yard: move up to waiting wagons" (default off): without it, trains couple only when they stop right at the wagons.
     - Wagons already standing at a wagon yard are registered when the mod starts (remote function "scan").
     - Scenario "UTL Coupling Yard – large network": own network of 4 × 3 roundabouts with UTL traffic; an ore mine and a factory with transfer and shunting yards, a mainline train travels between them.
-    - Shunting locomotive: uses the nearest turning stop, only works within 400 tiles, and approaches wagons from the end the train pathfinder can reach (not through the wagons' own signal block).
+    - Shunting locomotives use the nearest turning stop, only work within 400 tiles, and approach wagons from the end the train pathfinder can reach (not through the wagons' own signal block).
     - Remote function "crawl": switches the map setting "move up to waiting wagons" (for scenarios).
     - Scenario "UTL Coupling Yard – shunting yard": large shunting yard with real loading and unloading, demo tracks.
   Info:
+    - Pre-beta: first test version, things may still change.
     - No timers while nothing is being shunted.
+    - Licensed under MIT.
