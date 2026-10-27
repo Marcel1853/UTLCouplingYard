@@ -1,6 +1,6 @@
 # UTL Coupling Yard
 
-*Auf Deutsch lesen: [README-de.md](README-de.md).*
+*Auf Deutsch lesen: [README-de.md](https://github.com/Marcel1853/UTLCouplingYard/blob/main/README-de.md) im GitHub-Repository.*
 
 > **Pre-beta – test phase.** This is an early test version. Features, settings and station data may still change,
 > and things may not work as intended yet. Please try it in a separate save first and report problems or ideas.
