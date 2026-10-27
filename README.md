@@ -57,7 +57,8 @@ empty ones.
 "UTL Coupling Yard – large network": a network of its own with 4 × 3 roundabouts, double-track lines and signals,
 UTL stations and 33 UTL trains running deliveries. Two blocks hold an ore mine and a factory, each with a transfer yard
 and a shunting yard: the mainline train leaves its wagons, runs around and takes the ones provided; the shunting
-locomotive moves the wagons to the loading or unloading tracks and back.
+locomotive moves the wagons to the loading or unloading tracks and back. This scenario is still an early draft: it
+shows the idea but is not yet a finished, fully tested showcase.
 
 ## Tips
 

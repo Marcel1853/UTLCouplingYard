@@ -58,7 +58,8 @@ leere Wagen tauscht.
 „UTL Coupling Yard – Großnetz“: eigenes Netz aus 4 × 3 Kreiseln mit zweigleisigen Strecken und Signalen, UTL-Bahnhöfe
 und 33 UTL-Züge mit Lieferungen. In zwei Blöcken liegen eine Erzmine und eine Fabrik, jede mit Übergabebahnhof und
 Rangierbahnhof: Der Streckenzug stellt seine Wagen ab, setzt um und holt die bereitgestellten; die Rangierlok bringt
-die Wagen an die Lade- bzw. Entladegleise und zurück.
+die Wagen an die Lade- bzw. Entladegleise und zurück. Dieses Szenario ist noch ein früher Entwurf: Es zeigt die Idee,
+ist aber noch kein fertiger, gründlich getesteter Aufbau.
 
 ## Tipps
 
