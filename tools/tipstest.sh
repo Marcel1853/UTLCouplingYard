@@ -6,7 +6,7 @@ set -uo pipefail
 MOD_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MODS="$(cd "$MOD_DIR/.." && pwd)"
 FACTORIO="${FACTORIO:-/mnt/6459bc3a-dd91-42e5-8723-71427d99d0ba/SteamLibrary/steamapps/common/Factorio/bin/x64/factorio}"
-for scene in ${SCENES:-drop pickup shunt attach}; do
+for scene in ${SCENES:-swap pickup shunt attach}; do
   WORK="$(mktemp -d)"
   mkdir -p "$WORK/mods" "$WORK/data"
   ln -s "$MOD_DIR" "$WORK/mods/UTLCouplingYard"
