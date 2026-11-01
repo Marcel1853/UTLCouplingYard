@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: 2026-11-01
+  Features:
+    - Wagon yard mode "Have wagons attached from behind": a train stops and waits, a shunting locomotive fetches wagons from the wagon yard named in "Attach wagons from", pushes them up to the rear of the train and couples them. The train then leaves pulling them – no locomotive facing backwards needed. Map setting, on by default.
+    - "Wagons per shunting trip": the shunting locomotive takes only the first N wagons, the rest stays and is fetched on the next trip. Map setting, on by default.
+    - "Add to standing wagons": shunting locomotives also bring wagons to a wagon yard where wagons already stand and couple them to the end (a queue, e.g. for direct insertion). Same map setting.
+    - Tips and tricks: own category with scenes for leaving, picking up, shunting and attaching wagons.
+  Bugfixes:
+    - Wagons already standing were registered at every wagon yard within 40 tiles; the target of a shunting locomotive then counted as occupied and nothing was shunted. Each group of wagons now belongs to the nearest wagon yard only.
+    - A shunting locomotive that is already close to the train or wagons it should couple to now moves up directly instead of giving up.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 2026-10-27
   Features:

@@ -12,6 +12,9 @@ local Gate = require("scripts.yard.gate")
 
 local Yard = {}
 
+--- Wird gesetzt (scripts/core/setup.lua): Zug wartet auf angestellte Wagen (scripts/shunting/onto.lua).
+Yard.on_attach = function(unit, train, current) end
+
 local function warn(stop, key)
   if not (stop and stop.valid) then return end
   local p = stop.position
@@ -139,6 +142,10 @@ function Yard.process(entry)
     return
   end
   local mode = Registry.mode(entry.unit)
+  if mode == "attach" then -- Zug bleibt stehen, bis die Rangierlok Wagen an sein Ende gestellt hat
+    Yard.on_attach(entry.unit, train, entry.current)
+    return
+  end
   local fx, fy = Geometry.forward(stop)
   local head = Geometry.ends(train, stop)
   local pushed = false

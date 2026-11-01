@@ -1,6 +1,7 @@
 --- Eigener Abschnitt im UTL-Stationsfenster: nur an Stationen mit einer Rolle dieses Mods.
 --- Wagenbahnhof: Betriebsart, Rangierziel (Name eines anderen Wagenbahnhofs), wann die Rangierlok die
---- abgestellten Wagen dorthin bringt, und die Staffel-Nummer.
+--- abgestellten Wagen dorthin bringt, die Staffel-Nummer; je nach Karteneinstellung außerdem, woher angestellte
+--- Wagen kommen, Wagen je Rangierfahrt und „an vorhandene Wagen anhängen“.
 local Const = require("scripts.core.const")
 local Registry = require("scripts.stations.registry")
 
@@ -15,9 +16,21 @@ local function dropdown(flow, list, prefix, current, tags, tooltip)
   return flow.add({ type = "drop-down", items = items, selected_index = selected, tooltip = tooltip, tags = tags })
 end
 
+local function text_row(flow, key, text, tags, width, numeric)
+  local row = flow.add({ type = "flow", direction = "horizontal" })
+  row.style.vertical_align = "center"
+  local tooltip = { "utl-coupling-yard." .. key .. "-tooltip" }
+  row.add({ type = "label", caption = { "utl-coupling-yard." .. key }, tooltip = tooltip })
+  local field = row.add({ type = "textfield", text = text, numeric = numeric, tags = tags, tooltip = tooltip })
+  field.style.width = width
+end
+
 local function yard(flow, unit)
-  dropdown(flow, Const.MODES, "mode-", Registry.mode(unit), { ucy_mode = unit },
+  dropdown(flow, Registry.modes(), "mode-", Registry.mode(unit), { ucy_mode = unit },
     { "utl-coupling-yard.mode-tooltip" })
+  if settings.global["ucy-attach"].value then
+    text_row(flow, "attach-from", Registry.attach_from(unit) or "", { ucy_attach_from = unit }, 160)
+  end
   local to, when = Registry.shunt(unit)
   local row = flow.add({ type = "flow", direction = "horizontal" })
   row.style.vertical_align = "center"
@@ -33,6 +46,12 @@ local function yard(flow, unit)
   field = row.add({ type = "textfield", text = relay > 0 and tostring(relay) or "", numeric = true,
     tags = { ucy_relay = unit }, tooltip = { "utl-coupling-yard.relay-tooltip" } })
   field.style.width = 60
+  if settings.global["ucy-partial"].value then
+    local n = Registry.count(unit)
+    text_row(flow, "count", n > 0 and tostring(n) or "", { ucy_count = unit }, 60, true)
+    flow.add({ type = "checkbox", state = Registry.append(unit), caption = { "utl-coupling-yard.append" },
+      tooltip = { "utl-coupling-yard.append-tooltip" }, tags = { ucy_append = unit } })
+  end
   flow.add({ type = "checkbox", state = Registry.gate(unit), caption = { "utl-coupling-yard.gate" },
     tooltip = { "utl-coupling-yard.gate-tooltip" }, tags = { ucy_gate = unit } })
 end
@@ -60,7 +79,7 @@ function Section.changed(event)
   if not element.valid then return end
   local tags = element.tags
   if tags.ucy_mode then
-    Registry.set_mode(tags.ucy_mode, Const.MODES[element.selected_index] or Const.MODES[1])
+    Registry.set_mode(tags.ucy_mode, Registry.modes()[element.selected_index] or Const.MODES[1])
     Section.on_gate(tags.ucy_mode)
   elseif tags.ucy_when then
     set(tags.ucy_when, "shunt_when", Const.WHEN[element.selected_index] or Const.WHEN[1])
@@ -77,16 +96,25 @@ function Section.text(event)
   elseif tags.ucy_relay then
     local n = tonumber(text)
     set(tags.ucy_relay, "relay", n and n > 0 and math.floor(n) or nil)
+  elseif tags.ucy_attach_from then
+    set(tags.ucy_attach_from, "attach_from", text ~= "" and text or nil)
+  elseif tags.ucy_count then
+    local n = tonumber(text)
+    set(tags.ucy_count, "count", n and n > 0 and math.floor(n) or nil)
   end
 end
 
---- Ereignis on_gui_checked_state_changed: „Zuglimit steuern“.
+--- Ereignis on_gui_checked_state_changed: „Zuglimit steuern“, „an vorhandene Wagen anhängen“.
 function Section.checked(event)
   local element = event.element
-  local unit = element.valid and element.tags.ucy_gate
-  if not unit then return end
-  set(unit, "gate", element.state or nil)
-  Section.on_gate(unit)
+  if not element.valid then return end
+  local tags = element.tags
+  if tags.ucy_gate then
+    set(tags.ucy_gate, "gate", element.state or nil)
+    Section.on_gate(tags.ucy_gate)
+  elseif tags.ucy_append then
+    set(tags.ucy_append, "append", element.state or nil)
+  end
 end
 
 --- Wird gesetzt (control.lua): Sperre neu bewerten.

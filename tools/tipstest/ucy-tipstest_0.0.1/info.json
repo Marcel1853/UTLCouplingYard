@@ -1,0 +1,9 @@
+{
+  "name": "ucy-tipstest",
+  "version": "0.0.1",
+  "title": "UTL Coupling Yard – Tipps-Test",
+  "author": "Marcel171297",
+  "factorio_version": "2.1",
+  "description": "Nur für Headless-Tests, wird nicht veröffentlicht: führt eine Tipps-&-Tricks-Szene in einer normalen Welt aus.",
+  "dependencies": ["base >= 2.1.0", "UTLogistics >= 0.0.20", "UTLCouplingYard"]
+}

@@ -8,8 +8,12 @@ local Depot = require("scripts.shunting.depot")
 local Groups = require("scripts.shunting.groups")
 local Shunter = require("scripts.shunting.shunter")
 local Relay = require("scripts.yard.relay")
+local Onto = require("scripts.shunting.onto")
 
 Groups.on_ready = Shunter.request
+Groups.claim = Onto.offer
+Yard.on_attach = Onto.wait
+Onto.on_release = Yard.release
 
 local Setup = {}
 
@@ -31,6 +35,7 @@ function Setup.storage()
   storage.parked = storage.parked or {}       -- Wagenbahnhof (unit) → dort abgestellter Verband
   storage.reserved = storage.reserved or {}   -- Wagenbahnhof (unit) → Rangierlok ist mit Wagen dorthin unterwegs
   storage.gated = storage.gated or {}         -- Wagenbahnhof (unit) → Zuglimit wird vom Mod gesteuert
+  storage.attach = storage.attach or {}       -- Wagenbahnhof (unit) → Zug, der auf angestellte Wagen wartet
 end
 
 local function role(name, extra)

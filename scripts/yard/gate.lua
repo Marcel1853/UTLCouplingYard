@@ -43,8 +43,10 @@ function Gate.update(unit)
     return
   end
   storage.gated[unit] = true
-  local closed
-  if Registry.mode(unit) == "pickup" then
+  local closed, mode = false, Registry.mode(unit)
+  if mode == "attach" then
+    closed = false -- der Zug wartet am Halt, bis Wagen angestellt sind
+  elseif mode == "pickup" then
     closed = not parked(stop, 1)
   else
     closed = parked(stop, -1)

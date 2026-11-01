@@ -12,6 +12,10 @@
 --   I  Übergabe auf einem Gleis (Marcels Blaupause): zwei Halte gegenüber in der Mitte. Zug A schiebt die
 --      Wagen von Westen heran, kuppelt ab und fährt rückwärts zurück; Zug B kommt von Osten, kuppelt an und
 --      zieht sie nach Osten
+--   J  Wagen von hinten anstellen: Zug (nur eine Lok vorn) wartet am J-Halt, die Rangierlok holt zwei Wagen vom
+--      J-Lager, stellt sie an sein Ende; der Zug fährt mit ihnen weiter (Fahrplan erhalten)
+--   K  Wagen je Rangierfahrt (1) und an stehende Wagen anhängen: drei Wagen einzeln vom K-Lager zum K-Ziel, dort
+--      zu einer Reihe gekuppelt
 local MOD = "UTLCouplingYard"
 local CY = "ucy-selftest"
 
@@ -158,6 +162,52 @@ local function build()
   t.i_a = stock(s, "locomotive", -54, iy, 4)
   stock(s, "locomotive", -61, iy, 12)
   run(t.i_a, { "I-Ost", "I-West-Ende" })
+  -- J: anstellen. Depot im Westen, J-Lager (Halt nach Westen) mit zwei Wagen, Zug fährt nach Osten zum J-Halt
+  local function shunter_depot(name, sy)
+    local d = stop(s, name, -85, sy, true, true)
+    remote.call("utl", "set_station_role", d.unit_number, MOD .. "/depot")
+    local l = stock(s, "locomotive", -68, sy, 12)
+    stock(s, "locomotive", -75, sy, 4)
+    run(l, { name })
+    return l
+  end
+  local jy = 181
+  rail(s, jy)
+  t.j_shunter = shunter_depot("J-Depot", jy)
+  yard(stop(s, "J-Lager", -30, jy, true, true), "drop")
+  local jhalt = stop(s, "J-Halt", 50, jy, true)
+  yard(jhalt, "attach")
+  remote.call("utl", "set_station_data", jhalt.unit_number, MOD, "attach_from", "J-Lager")
+  stop(s, "J-Ende", 90, jy)
+  t.j_w1 = stock(s, "cargo-wagon", -26.5, jy)
+  t.j_w2 = stock(s, "cargo-wagon", -19.5, jy)
+  t.j_loco = stock(s, "locomotive", 10, jy)
+  -- K: je ein Wagen vom K-Lager (drei Wagen) zum K-Ziel, dort anhängen. Stammgleis y = 201 mit Depot und Wende,
+  -- Weiche (Marcels Rangier-Blaupause) bei x = 31 auf zwei Stumpfgleise: K-Lager (y = 193), K-Ziel (y = 209)
+  local ky = 201
+  local function line(ly, x1, x2)
+    for x = x1, x2, 2 do s.create_entity({ name = "straight-rail", position = { x, ly }, direction = 4, force = "player" }) end
+  end
+  line(ky, -95, 15)
+  line(ky - 8, 31, 95)
+  line(ky + 8, 31, 95)
+  for _, p in ipairs({ { "curved-rail-a", 28, ky + 8, 14 }, { "curved-rail-b", 23, ky + 6, 14 },
+    { "curved-rail-b", 19, ky + 2, 6 }, { "curved-rail-a", 14, ky, 6 }, { "curved-rail-a", 28, ky - 8, 12 },
+    { "curved-rail-b", 23, ky - 6, 12 }, { "curved-rail-b", 19, ky - 2, 4 }, { "curved-rail-a", 14, ky, 4 } }) do
+    s.create_entity({ name = p[1], position = { p[2], p[3] }, direction = p[4], force = "player" })
+  end
+  t.k_shunter = shunter_depot("K-Depot", ky)
+  local kturn = stop(s, "K-Wende", -30, ky, true, true)
+  remote.call("utl", "set_station_role", kturn.unit_number, MOD .. "/turn")
+  local klager = stop(s, "K-Lager", 80, ky - 8, true)
+  yard(klager, "drop")
+  remote.call("utl", "set_station_data", klager.unit_number, MOD, "count", 1)
+  remote.call("utl", "set_station_data", klager.unit_number, MOD, "shunt_to", "K-Ziel")
+  local kziel = stop(s, "K-Ziel", 80, ky + 8, true)
+  yard(kziel, "drop")
+  remote.call("utl", "set_station_data", kziel.unit_number, MOD, "append", true)
+  t.k_w = {}
+  for i, x in ipairs({ 76.5, 69.5, 62.5 }) do t.k_w[i] = stock(s, "cargo-wagon", x, ky - 8) end
   t.h_w = stock(s, "cargo-wagon", -46, y)
   stock(s, "locomotive", -53, y, 4)
   t.h_a = stock(s, "locomotive", -60, y, 12)
@@ -199,6 +249,8 @@ script.on_init(function()
   storage.results = {}
   remote.call("utl", "set_map_config", "utl-debug-log", true)
   storage.t = build()
+  remote.call(MOD, "scan") -- Wagen am J- und K-Lager erfassen
+  run(storage.t.j_loco, { "J-Halt", "J-Ende" })
   listen()
   say("Aufbau fertig")
 end)
@@ -292,12 +344,27 @@ script.on_nth_tick(60, function()
     check("I Übergabe: B hat die Wagen angekuppelt und nach Osten gezogen",
       iw.valid and iw.train == t.i_b.train and #t.i_b.train.carriages == 4)
   end
-  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h and s.i) or game.tick > 60 * 300 then
+  -- J: Zug kommt mit den angestellten Wagen am Ende an
+  train = at(t.j_loco, "J-Ende")
+  if train and not s.j then
+    s.j = true
+    check("J anstellen: Zug kam mit beiden angestellten Wagen am Ende an (Lok vorn, Wagen dahinter)",
+      #train.carriages == 3 and t.j_w1.train == train and t.j_w2.train == train
+        and (train.front_stock == t.j_loco or train.back_stock == t.j_loco), #train.carriages .. " Fahrzeuge")
+  end
+  -- K: alle drei Wagen stehen als eine Reihe ohne Lok am K-Ziel
+  local kw = t.k_w
+  if not s.k and kw[1].valid and kw[1].train and kw[1].train == kw[2].train and kw[2].train == kw[3].train
+      and #kw[1].train.carriages == 3 and kw[1].position.x > 40 and kw[1].position.y > 205 then
+    s.k = true
+    check("K je ein Wagen und anhängen: drei Wagen als Reihe am Ziel", true, "x " .. math.floor(kw[1].position.x))
+  end
+  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h and s.i and s.j and s.k) or game.tick > 60 * 300 then
     storage.done = true
     local r = storage.rebuilt or { yes = 0, no = 0 }
     check("E Umbauten bei UTL angemeldet", r.no == 0, "angemeldet " .. r.yes .. ", unangemeldet " .. r.no)
     if storage.h_canceled then check("H Lieferung abgebrochen: " .. tostring(storage.h_canceled), false) end
-    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h", "i" }) do
+    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h", "i", "j", "k" }) do
       if not s[k] then check(string.upper(k) .. " nicht angekommen", false) end
     end
     local bad = 0

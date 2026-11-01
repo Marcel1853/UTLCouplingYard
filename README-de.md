@@ -20,7 +20,8 @@ Wählbar im UTL-Stationsfenster, unter den UTL-Rollen.
     an den Wagen hält; Karteneinstellung „an wartende Wagen heranfahren“ lässt ihn bis 40 Kacheln langsam vorfahren),
   - und fährt dann mit seinem Fahrplan weiter. Wartebedingungen spielen an diesem Halt keine Rolle.
 
-  Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen. **Zuglimit steuern**: Kein Zug kommt,
+  Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen, Wagen von hinten anstellen lassen
+  (siehe unten). **Zuglimit steuern**: Kein Zug kommt,
   solange dort noch Wagen stehen, wo er halten würde (abstellen), bzw. bis Wagen vor dem Halt warten (abholen).
 - **Rangierdepot** – Depot für Rangierloks. UTL vermittelt sie nie. Eine Rangierlok muss in beide Richtungen
   fahren: mindestens eine Lok je Richtung (z. B. eine nach links, eine nach rechts). Ohne Fahrplan bekommt sie das
@@ -39,6 +40,18 @@ nach „Abfahrt“ → der nächste Zug holt sie dort ab.
 Mehrere Wagenbahnhöfe dürfen gleich heißen (z. B. drei Gleise „Ladebucht“): Die Rangierlok nimmt ein freies.
 Sie kommt mit den Wagen voran an, Stumpfgleise gehen also; falls nötig wechselt sie vorher an einer Wende die
 Richtung.
+
+**Wagen je Rangierfahrt** (Wagenbahnhof, an dem die Wagen warten): Die Rangierlok nimmt nur so viele Wagen mit –
+die an ihrem Ende – und holt den Rest bei den nächsten Fahrten. **An stehende Wagen anhängen** (Ziel): Wagen kommen
+auch dann, wenn dort schon Wagen stehen, und werden hinten angekuppelt – eine Wagenreihe, z. B. zum Beladen direkt
+aus Wagen in Maschinen. Beides lässt sich in den Karteneinstellungen abschalten.
+
+## Wagen von hinten anstellen
+
+Betriebsart **Wagen von hinten anstellen lassen**: Ein Zug hält und wartet. Eine Rangierlok holt Wagen vom
+Wagenbahnhof aus **Wagen anstellen von:**, schiebt sie an das Ende des Zuges und kuppelt sie an; der Zug fährt dann
+gezogen weiter. So nimmt auch ein Streckenzug mit Loks nur vorn Wagen mit – wie bei der echten Bahn, wo die
+Rangierlok die Wagen an den Zug stellt. In den Karteneinstellungen abschaltbar.
 
 ## Staffel
 
@@ -68,6 +81,7 @@ ist aber noch kein fertiger, gründlich getesteter Aufbau.
   fahren.
 - Übergabe auf einem Gleis: zwei Haltestellen gegenüber an derselben Stelle. Ein Zug schiebt die Wagen bis zu seinem Halt, kuppelt ab und fährt rückwärts weg; der andere kommt von der Gegenseite, kuppelt an und zieht sie weg. Beide brauchen Loks in beide Richtungen.
 - UTL schickt Rangierloks nicht zum Tanken: viel Brennstoff mitgeben oder eine Unterbrechung „Brennstoff niedrig“.
+- Tipps und Tricks (im Spiel): eigene Kategorie „UTL Coupling Yard“ mit kleinen Szenen.
 
 ## Leistung
 

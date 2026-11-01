@@ -10,8 +10,9 @@ Const.ROLE = {
   turn = Const.MOD .. "/turn",   -- Wende: Rangierlok wechselt hier die Richtung
 }
 
---- Betriebsarten des Wagenbahnhofs (Stationsdaten "mode"). Erste = Vorgabe.
-Const.MODES = { "swap", "drop", "pickup" }
+--- Betriebsarten des Wagenbahnhofs (Stationsdaten "mode"). Erste = Vorgabe. "attach" (Wagen von hinten anstellen)
+--- nur mit der Karteneinstellung „ucy-attach“.
+Const.MODES = { "swap", "drop", "pickup", "attach" }
 
 --- Wann die Rangierlok abgestellte Wagen weiterbringt (Stationsdaten "shunt_when"). Erste = Vorgabe.
 Const.WHEN = { "now", "empty", "full" }
