@@ -164,7 +164,7 @@ function Yard.process(entry)
     local target = find_ahead(train, head, fx, fy)
     if target then
       info.had_delivery = Relay.has_delivery(train)
-      if settings.global["ucy-crawl"].value then
+      if Registry.crawl(entry.unit) then
         Crawl.start(head, target, fx, fy, nil, info)
         return
       end

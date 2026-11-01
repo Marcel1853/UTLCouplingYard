@@ -53,6 +53,9 @@ function Setup.register()
   role("depot", { base = "depot", own_trains = true })
   role("turn")
   remote.call("utl", "register_gui_section", { mod = Const.MOD, interface = Const.MOD, build = "section" })
+  local ok, why = remote.call("utl", "register_manager_tab", { mod = Const.MOD, interface = Const.MOD,
+    build = "manager_tab", caption = { "utl-coupling-yard.manager-tab" } })
+  if not ok then log("[UCY] Reiter im UTL-Manager nicht angemeldet: " .. tostring(why)) end
   Registry.rebuild()
   return true
 end

@@ -5,6 +5,7 @@ local Setup = require("scripts.core.setup")
 local Worker = require("scripts.yard.worker")
 local Groups = require("scripts.shunting.groups")
 local Section = require("scripts.gui.section")
+local Manager = require("scripts.gui.manager")
 local Gate = require("scripts.yard.gate")
 
 Section.on_gate = Gate.update
@@ -12,6 +13,7 @@ Section.on_gate = Gate.update
 -- Rückrufe für UTL (Abschnitt im Stationsfenster) und Abfragen für andere Mods
 remote.add_interface(Const.MOD, {
   section = Section.build,
+  manager_tab = Manager.build,
   --- Wagen erfassen, die schon an Wagenbahnhöfen stehen (z. B. nach dem Bau aus einer Blaupause), und
   --- gesperrte Halte neu bewerten. Liefert die Zahl neuer Wagenverbände.
   scan = function()
@@ -55,7 +57,10 @@ end)
 
 script.on_event(defines.events.on_gui_selection_state_changed, Section.changed)
 script.on_event(defines.events.on_gui_text_changed, Section.text)
-script.on_event(defines.events.on_gui_checked_state_changed, Section.checked)
+script.on_event(defines.events.on_gui_checked_state_changed, function(event)
+  Section.checked(event)
+  Manager.checked(event)
+end)
 
 -- Wagen gebaut oder entfernt: gesperrte Halte neu bewerten (nur wenn es welche gibt)
 local STOCK = { { filter = "rolling-stock" } }

@@ -78,6 +78,14 @@ function Registry.count(unit)
   return data and tonumber(data.count) or 0
 end
 
+--- Fährt ein Zug hier im Schritttempo an wartende Wagen heran? Karteneinstellung für alle Wagenbahnhöfe oder
+--- Häkchen an diesem (z. B. wenn zwischen Halt und Wagen ein Signal steht).
+function Registry.crawl(unit)
+  if settings.global["ucy-crawl"].value then return true end
+  local data = data_of(unit)
+  return data ~= nil and data.crawl == true
+end
+
 --- Bringt die Rangierlok Wagen auch dann hierher, wenn schon welche stehen (sie werden angehängt)?
 function Registry.append(unit)
   if not settings.global["ucy-partial"].value then return false end

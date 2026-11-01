@@ -17,7 +17,8 @@ Wählbar im UTL-Stationsfenster, unter den UTL-Rollen.
 - **Wagenbahnhof** – ein Zug hält hier,
   - **stellt** alle Wagen hinter seinen Loks **ab**,
   - **holt** die Wagen **ab**, die direkt vor ihm warten, und kuppelt sie an (Haltestelle so setzen, dass der Zug
-    an den Wagen hält; Karteneinstellung „an wartende Wagen heranfahren“ lässt ihn bis 40 Kacheln langsam vorfahren),
+    an den Wagen hält; „an wartende Wagen heranfahren“ – Karteneinstellung oder Häkchen je Wagenbahnhof – lässt ihn
+    bis 40 Kacheln langsam vorfahren),
   - und fährt dann mit seinem Fahrplan weiter. Wartebedingungen spielen an diesem Halt keine Rolle.
 
   Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen, Wagen von hinten anstellen lassen
@@ -82,6 +83,7 @@ ist aber noch kein fertiger, gründlich getesteter Aufbau.
 - Übergabe auf einem Gleis: zwei Haltestellen gegenüber an derselben Stelle. Ein Zug schiebt die Wagen bis zu seinem Halt, kuppelt ab und fährt rückwärts weg; der andere kommt von der Gegenseite, kuppelt an und zieht sie weg. Beide brauchen Loks in beide Richtungen.
 - UTL schickt Rangierloks nicht zum Tanken: viel Brennstoff mitgeben oder eine Unterbrechung „Brennstoff niedrig“.
 - Tipps und Tricks (im Spiel): eigene Kategorie „UTL Coupling Yard“ mit kleinen Szenen.
+- UTL-Manager: eigener Reiter „UTL Coupling Yard“ mit den Karteneinstellungen dieses Mods und einer Übersicht.
 
 ## Leistung
 

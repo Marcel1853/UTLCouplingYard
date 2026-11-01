@@ -96,8 +96,6 @@ local function setup()
   local area = generate(surface)
   local force = game.forces["player"]
   force.research_all_technologies()
-  -- Am Abholgleis hält der Streckenzug vor dem Signal, das die bereitgestellten Wagen abtrennt: heranfahren
-  remote.call("UTLCouplingYard", "crawl", true)
   local stats = { rails_failed = 0, signals_failed = 0, signals = 0 }
   local sidings, frames = Network.build(surface, stats, BLOCKS)
   local count = Stations.build(sidings)

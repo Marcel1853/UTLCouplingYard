@@ -16,7 +16,8 @@ Pick them in the UTL station window, below the UTL roles.
 - **Wagon yard** – a train stops here and
   - **leaves** all wagons behind its locomotives,
   - **picks up** the wagons waiting right ahead of it and couples them (place the stop so the train stops at the
-    wagons; map setting "move up to waiting wagons" lets it move up to 40 tiles slowly),
+    wagons; "move up to waiting wagons" – map setting or checkbox per wagon yard – lets it move up to 40 tiles
+    slowly),
   - then carries on with its schedule. Wait conditions at this stop do not matter.
 
   Mode per station: leave and pick up, only leave, only pick up, have wagons attached from behind (see below).
@@ -80,6 +81,7 @@ shows the idea but is not yet a finished, fully tested showcase.
 - Handover on a single track: two stops facing each other at the same spot. One train pushes the wagons up to its stop, uncouples and backs off; the other comes from the opposite side, couples and pulls them away. Both need locomotives facing both ways.
 - UTL does not send shunting locomotives to refuel: give them plenty of fuel or a "fuel low" interrupt.
 - Tips and tricks (in game): own category "UTL Coupling Yard" with small scenes.
+- UTL Manager: own tab "UTL Coupling Yard" with the map settings of this mod and an overview.
 
 ## Performance
 

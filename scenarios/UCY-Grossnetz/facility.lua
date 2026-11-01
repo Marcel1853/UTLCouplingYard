@@ -13,7 +13,7 @@
 --- Signale: an jeder Weiche Kettensignal bei der Einfahrt, normales Signal bei der Ausfahrt. Abgestellte Wagen
 --- stehen immer in einem eigenen Block, nie im Fahrweg eines Zuges aus dem Netz; die Rangierlok fährt zum Ankuppeln
 --- bis 16 Felder vor die Wagen (freier Block) und schiebt dann heran, der Streckenzug am Abholgleis ebenso
---- (Karteneinstellung „Heranfahren“).
+--- (Häkchen „An wartende Wagen heranfahren“ an der Abfahrt; die Karteneinstellung bleibt, wie sie ist).
 local Common = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/common")
 local Rangier = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/rangier")
 
@@ -111,7 +111,9 @@ function Facility.build(F, prefix, mine)
   local stops = {}
   stops.arrive = station(F:stop(name("Ankunft"), ARRIVE, 25, false, true), "yard",
     { mode = "drop", shunt_to = load_name, shunt_when = "now", gate = true })
-  stops.depart = station(F:stop(name("Abfahrt"), DEPART, 41, true, true), "yard", { mode = "pickup", gate = true })
+  -- Abfahrt: zwischen Halt und bereitgestellten Wagen steht ein Signal – nur hier heranfahren (Häkchen am Halt)
+  stops.depart = station(F:stop(name("Abfahrt"), DEPART, 41, true, true), "yard",
+    { mode = "pickup", gate = true, crawl = true })
   stops.ready = station(F:stop(name("Bereitstellung"), READY, 41, false, true), "yard", { mode = "drop" })
   stops.turn = F:stop(name("Lokwende"), TURN, 33, false)
   stops.loads = {}
