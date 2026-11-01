@@ -1,5 +1,5 @@
--- Tipps & Tricks: eigene Kategorie. Vier Einträge mit Szene (Tauschen, Abholen, Rangieren, Anstellen) (UTL und dieser Mod laufen darin wirklich), drei als
--- reiner Text. Sofort sichtbar – der Mod hat keine eigene Forschung.
+-- Tipps & Tricks: eigene Kategorie. Vier Einträge mit Szene (Tauschen, Abholen, Rangieren, Anstellen – UTL und
+-- dieser Mod laufen darin wirklich), drei als reiner Text. Sofort sichtbar – der Mod hat keine eigene Forschung.
 local code = require("prototypes.tips.scenes")
 
 local function item(name, order, scene, extra)
