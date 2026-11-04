@@ -17,8 +17,7 @@ Wählbar im UTL-Stationsfenster, unter den UTL-Rollen.
 - **Wagenbahnhof** – ein Zug hält hier,
   - **stellt** alle Wagen hinter seinen Loks **ab**,
   - **holt** die Wagen **ab**, die direkt vor ihm warten, und kuppelt sie an (Haltestelle so setzen, dass der Zug
-    an den Wagen hält; „an wartende Wagen heranfahren“ – Karteneinstellung oder Häkchen je Wagenbahnhof – lässt ihn
-    bis 40 Kacheln langsam vorfahren),
+    an den Wagen hält; Karteneinstellung „an wartende Wagen heranfahren“ lässt ihn bis 40 Kacheln langsam vorfahren),
   - und fährt dann mit seinem Fahrplan weiter. Wartebedingungen spielen an diesem Halt keine Rolle.
 
   Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen, Wagen von hinten anstellen lassen

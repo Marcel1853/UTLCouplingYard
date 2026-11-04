@@ -54,11 +54,6 @@ local function yard(flow, unit)
   end
   flow.add({ type = "checkbox", state = Registry.gate(unit), caption = { "utl-coupling-yard.gate" },
     tooltip = { "utl-coupling-yard.gate-tooltip" }, tags = { ucy_gate = unit } })
-  if not settings.global["ucy-crawl"].value then -- sonst gilt es ohnehin überall
-    local data = remote.call("utl", "get_station_data", unit, Const.MOD) --[[@as table?]]
-    flow.add({ type = "checkbox", state = data ~= nil and data.crawl == true, caption = { "utl-coupling-yard.crawl" },
-      tooltip = { "utl-coupling-yard.crawl-tooltip" }, tags = { ucy_crawl = unit } })
-  end
 end
 
 --- Rückruf von UTL beim Öffnen des Stationsfensters.
@@ -109,7 +104,7 @@ function Section.text(event)
   end
 end
 
---- Ereignis on_gui_checked_state_changed: „Zuglimit steuern“, „an vorhandene Wagen anhängen“, „heranfahren“.
+--- Ereignis on_gui_checked_state_changed: „Zuglimit steuern“, „an vorhandene Wagen anhängen“.
 function Section.checked(event)
   local element = event.element
   if not element.valid then return end
@@ -119,8 +114,6 @@ function Section.checked(event)
     Section.on_gate(tags.ucy_gate)
   elseif tags.ucy_append then
     set(tags.ucy_append, "append", element.state or nil)
-  elseif tags.ucy_crawl then
-    set(tags.ucy_crawl, "crawl", element.state or nil)
   end
 end
 

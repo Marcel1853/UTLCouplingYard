@@ -38,9 +38,15 @@ function Couple.announce(stock, target)
 end
 
 --- Versucht, `stock` in Richtung `dir` an `target` zu kuppeln (nach Couple.announce). Liefert den neuen
---- Zug, wenn beide jetzt zusammenhängen, sonst nil (die Anmeldung bleibt offen).
+--- Zug, wenn beide jetzt zusammenhängen, sonst nil (die Anmeldung bleibt offen). Mit etwas Spalt kuppelt Factorio
+--- je nach Fahrzeug nur von einer Seite aus – dann vom Ziel aus in Richtung `stock`.
 function Couple.try(stock, dir, target)
-  if not stock.connect_rolling_stock(dir) then return nil end
+  if not stock.connect_rolling_stock(dir) then
+    local dx, dy = stock.position.x - target.position.x, stock.position.y - target.position.y
+    local o = target.orientation * 2 * math.pi
+    local toward = math.sin(o) * dx - math.cos(o) * dy > 0 and DIRS[1] or DIRS[2]
+    if not target.connect_rolling_stock(toward) then return nil end
+  end
   if stock.train ~= target.train then return nil end
   return stock.train
 end

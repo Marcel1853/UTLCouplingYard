@@ -16,8 +16,7 @@ Pick them in the UTL station window, below the UTL roles.
 - **Wagon yard** – a train stops here and
   - **leaves** all wagons behind its locomotives,
   - **picks up** the wagons waiting right ahead of it and couples them (place the stop so the train stops at the
-    wagons; "move up to waiting wagons" – map setting or checkbox per wagon yard – lets it move up to 40 tiles
-    slowly),
+    wagons; map setting "move up to waiting wagons" lets it move up to 40 tiles slowly),
   - then carries on with its schedule. Wait conditions at this stop do not matter.
 
   Mode per station: leave and pick up, only leave, only pick up, have wagons attached from behind (see below).

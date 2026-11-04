@@ -12,15 +12,19 @@
 --- und Abholgleis auf y = 33: geradeaus die Lokwende, über eine S-Kurve zurück aufs Bahnhofsgleis (Einmündung 229).
 --- Signale: an jeder Weiche Kettensignal bei der Einfahrt, normales Signal bei der Ausfahrt. Abgestellte Wagen
 --- stehen immer in einem eigenen Block, nie im Fahrweg eines Zuges aus dem Netz; die Rangierlok fährt zum Ankuppeln
---- bis 16 Felder vor die Wagen (freier Block) und schiebt dann heran, der Streckenzug am Abholgleis ebenso
---- (Häkchen „An wartende Wagen heranfahren“ an der Abfahrt; die Karteneinstellung bleibt, wie sie ist).
+--- bis 16 Felder vor die Wagen (freier Block) und schiebt dann heran.
+--- Abholgleis wie Marcels Blaupause „Übergabe auf einem Gleis“: Bereitstellung und Abfahrt fast gegenüber (2 Felder
+--- versetzt), dazwischen ein Signal auf der Südseite direkt neben der Bereitstellung, dessen Blockgrenze (x = 142)
+--- zwischen den bereitgestellten Wagen (Spitze bei 141,5) und der Zugspitze (142,5) liegt. Der Streckenzug hält
+--- direkt an den Wagen und kuppelt ohne Heranfahren (Factorio kuppelt bis knapp 2,5 Felder Spalt). Gemessen: nach
+--- Osten steht die Mitte des vordersten Fahrzeugs 2 Felder vor dem Halt, nach Westen 4 Felder dahinter.
 local Common = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/common")
 local Rangier = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/rangier")
 
 local MOD = "UTLCouplingYard"
 local CAPACITY = 4    -- Plätze je Wagen (begrenzt), damit Laden und Entladen nicht ewig dauern
 local BX, BY = 168, 166 -- Lage der Rangier-Blaupause im Rahmen
-local ARRIVE, DEPART, READY, TURN = 158, 148, 140, 248
+local ARRIVE, DEPART, READY, TURN = 158, 142, 140, 248
 
 local NAMES = { S = "straight-rail", A = "curved-rail-a", B = "curved-rail-b", H = "half-diagonal-rail",
   G = "rail-signal", K = "rail-chain-signal" }
@@ -56,7 +60,7 @@ local function signals(F)
     { false, 109.5, 26.5, 12 }, { true, 109.5, 23.5, 4 },
     { false, 127.5, 23.5, 4 }, { false, 127.5, 26.5, 12 },                             -- Ankunftsgleis geteilt
     { false, 110.5, 39.5, 4 }, { false, 110.5, 42.5, 12 },                             -- Bereitstellung (Block)
-    { false, 143.5, 39.5, 4 }, { false, 143.5, 42.5, 12 },                             -- zwischen den Halten
+    { false, 141.5, 42.5, 12 },                                                        -- zwischen den Halten
     { true, 161.5, 26.5, 12 }, { true, 161.5, 42.5, 12 }, { false, 161.5, 39.5, 4 },   -- Weiche Ost
     { true, 201.5, 31.5, 4 }, { false, 201.5, 34.5, 12 },
     { true, 207.5, 26.5, 12 }, { true, 219.5, 20.5, 12 }, { true, 230.5, 20.5, 12 },   -- Einmündung
@@ -111,9 +115,7 @@ function Facility.build(F, prefix, mine)
   local stops = {}
   stops.arrive = station(F:stop(name("Ankunft"), ARRIVE, 25, false, true), "yard",
     { mode = "drop", shunt_to = load_name, shunt_when = "now", gate = true })
-  -- Abfahrt: zwischen Halt und bereitgestellten Wagen steht ein Signal – nur hier heranfahren (Häkchen am Halt)
-  stops.depart = station(F:stop(name("Abfahrt"), DEPART, 41, true, true), "yard",
-    { mode = "pickup", gate = true, crawl = true })
+  stops.depart = station(F:stop(name("Abfahrt"), DEPART, 41, true, true), "yard", { mode = "pickup", gate = true })
   stops.ready = station(F:stop(name("Bereitstellung"), READY, 41, false, true), "yard", { mode = "drop" })
   stops.turn = F:stop(name("Lokwende"), TURN, 33, false)
   stops.loads = {}
@@ -146,7 +148,7 @@ function Facility.build(F, prefix, mine)
     l1.train.manual_mode = false
   end
   -- Startwagen: Erzmine – volle Wagen bereitgestellt; Fabrik – leere bereitgestellt, volle am ersten Entladegleis
-  wagons(F, 41, READY - 3.7, READY - 10.7, mine)
+  wagons(F, 41, READY - 2, READY - 9, mine) -- so, wie die Rangierlok sie hinschiebt
   if not mine then
     local first = stops.loads[3]
     local y, x = first.connected_rail.position.y - F.oy, first.position.x - F.ox -- Rahmen ungedreht

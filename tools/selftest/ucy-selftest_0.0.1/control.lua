@@ -16,8 +16,6 @@
 --      J-Lager, stellt sie an sein Ende; der Zug fährt mit ihnen weiter (Fahrplan erhalten)
 --   K  Wagen je Rangierfahrt (1) und an stehende Wagen anhängen: drei Wagen einzeln vom K-Lager zum K-Ziel, dort
 --      zu einer Reihe gekuppelt
---   L  Heranfahren nur an diesem Wagenbahnhof (Häkchen, Karteneinstellung aus): Wagen warten 8 Felder vor dem Halt,
---      der Zug fährt heran und nimmt sie mit
 local MOD = "UTLCouplingYard"
 local CY = "ucy-selftest"
 
@@ -210,17 +208,6 @@ local function build()
   remote.call("utl", "set_station_data", kziel.unit_number, MOD, "append", true)
   t.k_w = {}
   for i, x in ipairs({ 76.5, 69.5, 62.5 }) do t.k_w[i] = stock(s, "cargo-wagon", x, ky - 8) end
-  -- L: Heranfahren je Wagenbahnhof
-  local ly = 221
-  rail(s, ly)
-  local lhof = stop(s, "L-Hof", 0, ly, true)
-  yard(lhof, "pickup")
-  remote.call("utl", "set_station_data", lhof.unit_number, MOD, "crawl", true)
-  stop(s, "L-Ende", 80, ly)
-  t.l_x1 = stock(s, "cargo-wagon", 11.7, ly)
-  t.l_x2 = stock(s, "cargo-wagon", 18.7, ly)
-  t.l_loco = stock(s, "locomotive", -40, ly)
-  run(t.l_loco, { "L-Hof", "L-Ende" })
   t.h_w = stock(s, "cargo-wagon", -46, y)
   stock(s, "locomotive", -53, y, 4)
   t.h_a = stock(s, "locomotive", -60, y, 12)
@@ -372,18 +359,12 @@ script.on_nth_tick(60, function()
     s.k = true
     check("K je ein Wagen und anhängen: drei Wagen als Reihe am Ziel", true, "x " .. math.floor(kw[1].position.x))
   end
-  train = at(t.l_loco, "L-Ende")
-  if train and not s.l then
-    s.l = true
-    check("L Heranfahren je Wagenbahnhof: Zug fuhr heran und kam mit beiden Wagen am Ende an",
-      #train.carriages == 3 and t.l_x1.train == train and not settings.global["ucy-crawl"].value, #train.carriages .. " Wagen")
-  end
-  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h and s.i and s.j and s.k and s.l) or game.tick > 60 * 300 then
+  if (s.a and s.b and s.c and s.d and s.f and s.g and s.h and s.i and s.j and s.k) or game.tick > 60 * 300 then
     storage.done = true
     local r = storage.rebuilt or { yes = 0, no = 0 }
     check("E Umbauten bei UTL angemeldet", r.no == 0, "angemeldet " .. r.yes .. ", unangemeldet " .. r.no)
     if storage.h_canceled then check("H Lieferung abgebrochen: " .. tostring(storage.h_canceled), false) end
-    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h", "i", "j", "k", "l" }) do
+    for _, k in ipairs({ "a", "b", "c", "d", "f", "g", "h", "i", "j", "k" }) do
       if not s[k] then check(string.upper(k) .. " nicht angekommen", false) end
     end
     local bad = 0
