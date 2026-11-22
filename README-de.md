@@ -6,6 +6,19 @@
 > noch ändern, und manches läuft vielleicht noch nicht wie gedacht. Bitte zuerst in einem eigenen Spielstand
 > ausprobieren und Probleme oder Ideen melden.
 
+> **Neu in 0.0.3 – funktioniert jetzt etwas anders, Rückmeldungen erwünscht:**
+> - **Rangieren ohne Heranfahren:** Ist die Karteneinstellung „an wartende Wagen heranfahren“ aus (Vorgabe), hält
+>   die Rangierlok an einem Halt gegenüber den Wagen – gesetzt wie bei der Übergabe auf einem Gleis – und kuppelt
+>   sofort. Nur wo es keinen solchen Halt gibt oder ein Signal dazwischen steht, fährt sie das letzte Stück selbst,
+>   zügig. Mit der Einstellung fährt sie wie bisher im Schritttempo heran.
+> - **Beta: Wagen von hinten anstellen lassen** (Karteneinstellung, standardmäßig aus): Ein Zug mit Loks nur vorn
+>   wartet, eine Rangierlok stellt ihm die Wagen hinten an. Züge mit Loks in beide Richtungen funktionieren genau wie
+>   bisher.
+> - **Wagen je Rangierfahrt** und **an stehende Wagen anhängen** (Wagenreihen), eigener Reiter im UTL-Manager,
+>   Tipps und Tricks und sechs weitere Sprachen.
+>
+> Noch ist nicht alles endgültig – schreibt mir, was bei euch klappt und was nicht, in der Diskussion oder auf GitHub.
+
 Add-on für **Unified Train Logistics (UTL)**: An- und Abkuppeln. Züge lassen Wagen an Bahnhöfen stehen,
 Rangierloks holen, bringen und stellen sie ab. Gedacht für schöne Bahnhöfe und Rollenspiel. Braucht UTLogistics
 0.0.20 oder neuer.

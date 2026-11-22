@@ -5,6 +5,19 @@
 > **Pre-beta – test phase.** This is an early test version. Features, settings and station data may still change,
 > and things may not work as intended yet. Please try it in a separate save first and report problems or ideas.
 
+> **New in 0.0.3 – works a bit differently now, feedback welcome:**
+> - **Shunting without moving up:** with the map setting "move up to waiting wagons" off (default), a shunting
+>   locomotive stops at a train stop facing the wagons – placed like a handover on one track – and couples right
+>   away. Only where there is no such stop, or a signal stands in between, it drives the last part itself at normal
+>   speed. With the setting on, it moves up at walking pace as before.
+> - **Beta: have wagons attached from behind** (map setting, off by default): a train with locomotives at the front
+>   only waits, and a shunting locomotive attaches the wagons to its rear. Trains with locomotives facing both ways
+>   work exactly as before.
+> - **Wagons per shunting trip** and **add to standing wagons** (queues), an own tab in the UTL Manager, tips and
+>   tricks, and six more languages.
+>
+> Not everything is final yet – tell me what works for you and what does not, in the discussion or on GitHub.
+
 Add-on for **Unified Train Logistics (UTL)**: coupling and uncoupling. Trains leave wagons at stations, shunting
 locomotives fetch, bring and park them. Made for good-looking stations and role play. Requires UTLogistics 0.0.20
 or newer.
