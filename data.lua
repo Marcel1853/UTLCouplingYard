@@ -10,3 +10,4 @@ data:extend({ {
   subgroup = "virtual-signal",
   order = "z[ucy-relay]",
 } })
+require("prototypes.tips.tips")

@@ -44,10 +44,45 @@ end
 function Registry.mode(unit)
   local data = remote.call("utl", "get_station_data", unit, Const.MOD) --[[@as table?]]
   local mode = data and data.mode
+  if mode == "attach" and not settings.global["ucy-attach"].value then return "pickup" end
   for _, m in pairs(Const.MODES) do
     if m == mode then return mode end
   end
   return Const.MODES[1]
+end
+
+--- Betriebsarten, die gerade wählbar sind (Karteneinstellungen).
+function Registry.modes()
+  local list = {}
+  for _, m in ipairs(Const.MODES) do
+    if m ~= "attach" or settings.global["ucy-attach"].value then list[#list + 1] = m end
+  end
+  return list
+end
+
+local function data_of(unit)
+  return remote.call("utl", "get_station_data", unit, Const.MOD) --[[@as table?]]
+end
+
+--- „Wagen von hinten anstellen“: Name des Wagenbahnhofs, von dem die Wagen kommen, oder nil.
+function Registry.attach_from(unit)
+  local data = data_of(unit)
+  local from = data and data.attach_from
+  return type(from) == "string" and from ~= "" and from or nil
+end
+
+--- Wagen je Rangierfahrt von diesem Wagenbahnhof (0 = alle).
+function Registry.count(unit)
+  if not settings.global["ucy-partial"].value then return 0 end
+  local data = data_of(unit)
+  return data and tonumber(data.count) or 0
+end
+
+--- Bringt die Rangierlok Wagen auch dann hierher, wenn schon welche stehen (sie werden angehängt)?
+function Registry.append(unit)
+  if not settings.global["ucy-partial"].value then return false end
+  local data = data_of(unit)
+  return data ~= nil and data.append == true
 end
 
 function Registry.set_mode(unit, mode)

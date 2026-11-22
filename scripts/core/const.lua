@@ -10,18 +10,21 @@ Const.ROLE = {
   turn = Const.MOD .. "/turn",   -- Wende: Rangierlok wechselt hier die Richtung
 }
 
---- Betriebsarten des Wagenbahnhofs (Stationsdaten "mode"). Erste = Vorgabe.
-Const.MODES = { "swap", "drop", "pickup" }
+--- Betriebsarten des Wagenbahnhofs (Stationsdaten "mode"). Erste = Vorgabe. "attach" (Wagen von hinten anstellen)
+--- nur mit der Karteneinstellung „ucy-attach“.
+Const.MODES = { "swap", "drop", "pickup", "attach" }
 
 --- Wann die Rangierlok abgestellte Wagen weiterbringt (Stationsdaten "shunt_when"). Erste = Vorgabe.
 Const.WHEN = { "now", "empty", "full" }
 
 Const.ROLLING_STOCK = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon" }
 
-Const.TICK = 5          -- Takt beim Rangieren (nur angemeldet, solange etwas zu tun ist)
+Const.TICK = 2          -- Takt beim Rangieren (nur angemeldet, solange etwas zu tun ist; 1 nutzt schon die Sperre)
 Const.CRAWL_SPEED = 0.05 -- Schritttempo beim Heranschieben (Kacheln je Tick)
+Const.APPROACH_SPEED = 0.3 -- Rangierlok ohne „heranfahren“: Höchsttempo auf dem letzten Stück (Kacheln je Tick)
+Const.APPROACH_BRAKE = 0.02 -- … und so viel Tempo je Kachel Abstand (bremst vor den Wagen auf Schritttempo)
 Const.SEARCH = 40       -- so weit vor dem Zug (Kacheln) werden Wagen zum Abholen gesucht
-Const.STALL_STEPS = 12  -- so viele Takte ohne Bewegung: Heranschieben aufgeben
+Const.STALL_STEPS = 30  -- so viele Takte ohne Bewegung (eine Sekunde): Heranschieben aufgeben
 Const.CRAWL_TIMEOUT = 60 * 60 -- spätestens nach einer Minute aufgeben
 Const.APPROACH = 12     -- so weit vor dem Ende eines Wagenverbands hält die Rangierlok, dann schiebt sie heran
 Const.CHECK_TICKS = 120 -- Prüftakt für Wagen, die auf „leer“/„voll“ warten (nur solange welche warten)

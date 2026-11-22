@@ -12,6 +12,9 @@ local Gate = require("scripts.yard.gate")
 
 local Yard = {}
 
+--- Wird gesetzt (scripts/core/setup.lua): Zug wartet auf angestellte Wagen (scripts/shunting/onto.lua).
+Yard.on_attach = function(unit, train, current) end
+
 local function warn(stop, key)
   if not (stop and stop.valid) then return end
   local p = stop.position
@@ -139,6 +142,10 @@ function Yard.process(entry)
     return
   end
   local mode = Registry.mode(entry.unit)
+  if mode == "attach" then -- Zug bleibt stehen, bis die Rangierlok Wagen an sein Ende gestellt hat
+    Yard.on_attach(entry.unit, train, entry.current)
+    return
+  end
   local fx, fy = Geometry.forward(stop)
   local head = Geometry.ends(train, stop)
   local pushed = false
@@ -157,17 +164,17 @@ function Yard.process(entry)
     local target = find_ahead(train, head, fx, fy)
     if target then
       info.had_delivery = Relay.has_delivery(train)
-      if settings.global["ucy-crawl"].value then
-        Crawl.start(head, target, fx, fy, nil, info)
-        return
-      end
-      -- ohne Heranfahren: Der Zug steht direkt an den Wagen (Haltestelle wie in der Blaupause) – sofort kuppeln
+      -- Steht der Zug direkt an den Wagen (Halte gegenüber wie in Marcels Blaupause), sofort kuppeln; sonst das
+      -- letzte Stück heranfahren (Tempo: scripts/coupling/crawl.lua)
       local ids = Couple.announce(head, target)
       local joined = Couple.try(head, Geometry.ahead(head, fx, fy), target)
-      train = joined or (head and head.train) or train
-      Couple.finish(ids, train)
-      if not joined then warn(stop, "warn-not-touching") end
-      Yard.release(train, info)
+      if joined then
+        Couple.finish(ids, joined)
+        Yard.release(joined, info)
+      else
+        Couple.finish(ids, train)
+        Crawl.start(head, target, fx, fy, nil, info)
+      end
       return
     end
   end

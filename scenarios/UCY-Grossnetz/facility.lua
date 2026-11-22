@@ -1,26 +1,29 @@
 --- Kuppel-Anlage in einem Block des Netzes (Erzmine oder Fabrik), so wie es bei der echten Bahn läuft:
----   Übergabebahnhof (oben, am Bahnhofsgleis der Strecke): Der Streckenzug fährt gezogen ein, stellt seine Wagen auf
----   dem Ankunftsgleis ab, setzt über die Lokwende um, holt die bereitgestellten Wagen vom Abholgleis und fährt
----   gezogen weiter.
----   Rangierbahnhof (unten, Marcels Blaupause rangier.lua): Die Rangierlok holt die abgestellten Wagen vom
----   Ankunftsgleis an die Ladegleise (Erzmine: beladen) bzw. Entladegleise (Fabrik) und stellt sie danach auf dem
----   Abholgleis bereit.
+---   Übergabebahnhof (oben, am Bahnhofsgleis der Strecke): Der Streckenzug (eine Lok vorn) fährt gezogen ein, stellt
+---   seine Wagen an der Ankunft ab, fährt ein Stück vor zur Abfahrt und wartet. Die Rangierlok stellt ihm die
+---   bereitgestellten Wagen von hinten an (Betriebsart „Wagen von hinten anstellen lassen“), dann fährt er gezogen
+---   weiter. Er braucht weder Lok in Gegenrichtung noch Lokwende, und heranfahren muss nur die Rangierlok.
+---   Ohne das Beta-Feature „anstellen“ (Karteneinstellung beim Start aus): Streckenzug mit zwei Loks Rücken an Rücken;
+---   er stellt ab, wendet in der Lokwende und holt die Wagen am Halt „Abholung“ gegenüber der Bereitstellung.
+---   Rangierbahnhof (unten, Marcels Blaupause rangier.lua): Die Rangierlok holt die abgestellten Wagen von der Ankunft
+---   an die Ladegleise (Erzmine: beladen) bzw. Entladegleise (Fabrik) und stellt sie danach bereit.
 --- Aufgeschrieben im Rahmen der Strecke über dem Block (Kreisel bei x = 0, Bahnhofsgleis nach Osten bei y = 19).
 ---
 --- Gleise: Abzweig bei x = 63 → Ankunftsgleis y = 25; Verbindungsgleis y = 33 mündet bei x = 91 ein (Weg der
---- Rangierlok); Abholgleis y = 41 (westlich davon das Gleis zum Rangierbahnhof); Weiche bei x = 163 führt Ankunfts-
---- und Abholgleis auf y = 33: geradeaus die Lokwende, über eine S-Kurve zurück aufs Bahnhofsgleis (Einmündung 229).
---- Signale: an jeder Weiche Kettensignal bei der Einfahrt, normales Signal bei der Ausfahrt. Abgestellte Wagen
---- stehen immer in einem eigenen Block, nie im Fahrweg eines Zuges aus dem Netz; die Rangierlok fährt zum Ankuppeln
---- bis 16 Felder vor die Wagen (freier Block) und schiebt dann heran, der Streckenzug am Abholgleis ebenso
---- (Karteneinstellung „Heranfahren“).
+--- Rangierlok); Gleis y = 41 vom Rangierbahnhof mit der Bereitstellung; Weiche bei x = 163 führt beide auf y = 33,
+--- über eine S-Kurve zurück aufs Bahnhofsgleis (Einmündung 229).
+--- Signale: an jeder Weiche Kettensignal bei der Einfahrt, normales Signal bei der Ausfahrt. Abgestellte Wagen stehen
+--- immer in einem eigenen Block, nie im Fahrweg eines Zuges aus dem Netz. Das Ankunftsgleis ist dreigeteilt
+--- (Grenzen bei x = 124 und 148): Die Rangierlok fährt zum Ankuppeln bis 16 Felder vor die Wagen bzw. den wartenden
+--- Zug, immer in einen freien Block, und schiebt dann heran; ebenso vor der Bereitstellung (Grenze bei x = 120). Gemessen: nach Osten steht die Mitte des vordersten
+--- Fahrzeugs 2 Felder vor dem Halt.
 local Common = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/common")
 local Rangier = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/rangier")
 
 local MOD = "UTLCouplingYard"
 local CAPACITY = 4    -- Plätze je Wagen (begrenzt), damit Laden und Entladen nicht ewig dauern
 local BX, BY = 168, 166 -- Lage der Rangier-Blaupause im Rahmen
-local ARRIVE, DEPART, READY, TURN = 158, 148, 140, 248
+local ARRIVE, DEPART, READY, FETCH, TURN = 152, 160, 140, 146, 248
 
 local NAMES = { S = "straight-rail", A = "curved-rail-a", B = "curved-rail-b", H = "half-diagonal-rail",
   G = "rail-signal", K = "rail-chain-signal" }
@@ -32,10 +35,10 @@ function Facility.rails(F)
   F:straight(25, 83, 163)          -- Einfahr- und Ankunftsgleis
   F:straight(33, 85, 91)           -- Verbindungsgleis der Rangierlok …
   F:throat(91, 25, false, "lower") -- … mündet ins Ankunftsgleis
-  F:straight(41, 67, 163)          -- Gleis vom Rangierbahnhof, östlich davon das Abholgleis
+  F:straight(41, 67, 163)          -- Gleis vom Rangierbahnhof mit der Bereitstellung
   F:throat(69, 33, false, "lower") -- Abzweig zum Verbindungsgleis
   F:throat(163, 33, false)         -- Ankunfts- und Abholgleis → y = 33
-  F:straight(33, 179, 255)         -- Lokwende (Stumpf)
+  F:straight(33, 179, 255)         -- Lokwende (Stumpf, nur ohne „anstellen“)
   F:throat(183, 25, false, "lower")
   F:straight(25, 199, 209)
   F:merge(229, 19)
@@ -54,11 +57,13 @@ local function signals(F)
     { true, 59.5, 20.5, 12 }, { false, 72.5, 20.5, 12 }, { false, 81.5, 26.5, 12 },   -- Abzweig
     { true, 89.5, 26.5, 12 }, { true, 89.5, 34.5, 12 }, { false, 89.5, 31.5, 4 },      -- Einmündung Verbindungsgleis
     { false, 109.5, 26.5, 12 }, { true, 109.5, 23.5, 4 },
-    { false, 127.5, 23.5, 4 }, { false, 127.5, 26.5, 12 },                             -- Ankunftsgleis geteilt
-    { false, 110.5, 39.5, 4 }, { false, 110.5, 42.5, 12 },                             -- Bereitstellung (Block)
-    { false, 143.5, 39.5, 4 }, { false, 143.5, 42.5, 12 },                             -- zwischen den Halten
+    { false, 123.5, 23.5, 4 }, { false, 123.5, 26.5, 12 },                             -- Ankunftsgleis: Anfahrt
+    { false, 147.5, 23.5, 4 }, { false, 147.5, 26.5, 12 },                             -- zwischen Ankunft und Abfahrt
+    { false, 110.5, 39.5, 4 }, { false, 110.5, 42.5, 12 },                             -- Bereitstellung: Anfahrt
+    { false, 120.5, 39.5, 4 }, { false, 120.5, 42.5, 12 },                             -- Bereitstellung (Block)
+    { false, 143.5, 39.5, 4 }, { false, 143.5, 42.5, 12 },                             -- zwischen Bereitstellung und Abholung
     { true, 161.5, 26.5, 12 }, { true, 161.5, 42.5, 12 }, { false, 161.5, 39.5, 4 },   -- Weiche Ost
-    { true, 201.5, 31.5, 4 }, { false, 201.5, 34.5, 12 },
+    { true, 201.5, 31.5, 4 }, { false, 201.5, 34.5, 12 },                              -- Lokwende
     { true, 207.5, 26.5, 12 }, { true, 219.5, 20.5, 12 }, { true, 230.5, 20.5, 12 },   -- Einmündung
   }
   for _, s in ipairs(list) do F:signal(s[1], s[2], s[3], s[4]) end
@@ -111,8 +116,11 @@ function Facility.build(F, prefix, mine)
   local stops = {}
   stops.arrive = station(F:stop(name("Ankunft"), ARRIVE, 25, false, true), "yard",
     { mode = "drop", shunt_to = load_name, shunt_when = "now", gate = true })
-  stops.depart = station(F:stop(name("Abfahrt"), DEPART, 41, true, true), "yard", { mode = "pickup", gate = true })
+  stops.depart = station(F:stop(name("Abfahrt"), DEPART, 25, false, true), "yard",
+    { mode = "attach", attach_from = name("Bereitstellung") })
   stops.ready = station(F:stop(name("Bereitstellung"), READY, 41, false, true), "yard", { mode = "drop" })
+  -- ohne „anstellen“: Abholung gegenüber der Bereitstellung (Signal dazwischen) und Lokwende
+  stops.fetch = station(F:stop(name("Abholung"), FETCH, 41, true, true), "yard", { mode = "pickup", gate = true })
   stops.turn = F:stop(name("Lokwende"), TURN, 33, false)
   stops.loads = {}
   for _, e in ipairs(Rangier.stops) do
@@ -144,11 +152,11 @@ function Facility.build(F, prefix, mine)
     l1.train.manual_mode = false
   end
   -- Startwagen: Erzmine – volle Wagen bereitgestellt; Fabrik – leere bereitgestellt, volle am ersten Entladegleis
-  wagons(F, 41, READY - 3.7, READY - 10.7, mine)
+  wagons(F, 41, READY - 2, READY - 9, mine) -- so, wie die Rangierlok sie hinschiebt
   if not mine then
     local first = stops.loads[3]
     local y, x = first.connected_rail.position.y - F.oy, first.position.x - F.ox -- Rahmen ungedreht
-    wagons(F, y, x - 3.7, x - 10.7, true)
+    wagons(F, y, x - 2, x - 9, true)
   end
   Common.sign(stops.arrive, "arrive")
   Common.sign(stops.depart, "depart")
@@ -159,11 +167,16 @@ function Facility.build(F, prefix, mine)
   return stops
 end
 
---- Streckenzug (zwei Loks Rücken an Rücken, zwei leere Wagen) am Ankunftsgleis der Anlage im Rahmen F.
-function Facility.train(F, records)
-  local a = F:stock("locomotive", ARRIVE - 3.7, 25)
-  F:stock("locomotive", ARRIVE - 10.7, 25, true)
-  wagons(F, 25, ARRIVE - 17.7, ARRIVE - 24.7, false)
+--- Streckenzug an der Ankunft der Anlage im Rahmen F: mit `attach` eine Lok vorn, sonst zwei Loks Rücken an Rücken;
+--- dahinter zwei leere Wagen.
+function Facility.train(F, records, attach)
+  local a = F:stock("locomotive", ARRIVE - 2, 25)
+  local back = ARRIVE - 9
+  if not attach then
+    F:stock("locomotive", back, 25, true)
+    back = back - 7
+  end
+  wagons(F, 25, back, back - 7, false)
   local schedule = a.train.get_schedule()
   schedule.clear_records()
   for _, r in ipairs(records) do

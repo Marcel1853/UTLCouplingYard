@@ -4,34 +4,21 @@
 ---   couple  – Auftrag fertig: festhalten, im Schritttempo heranschieben, ankuppeln (scripts/coupling/crawl.lua)
 ---   deliver – Auftrag zum Ziel (falls nötig über eine Wende)
 ---   drop    – am Ziel: Auftrag beenden, abkuppeln, Verband dort anmelden, Lok fährt mit ihrem Fahrplan ins Depot
+--- „Wagen je Rangierfahrt“: nach dem Ankuppeln nur die ersten N Wagen mitnehmen, der Rest bleibt stehen.
+--- Anstellen an einen wartenden Zug und Anhängen an stehende Wagen: scripts/shunting/onto.lua.
 local Const = require("scripts.core.const")
 local Registry = require("scripts.stations.registry")
 local Couple = require("scripts.coupling.couple")
 local Crawl = require("scripts.coupling.crawl")
+local Geometry = require("scripts.coupling.geometry")
 local Groups = require("scripts.shunting.groups")
 local Gate = require("scripts.yard.gate")
+local H = require("scripts.shunting.helpers")
+local Onto = require("scripts.shunting.onto")
 
 local Shunter = {}
 
-local WAIT = { { type = "time", ticks = 30 } }
-
-local function warn(stop, key)
-  if not (stop and stop.valid) then return end
-  local p = stop.position
-  stop.force.print({ "utl-coupling-yard." .. key, stop.backer_name,
-    string.format("[gps=%d,%d,%s]", math.floor(p.x), math.floor(p.y), stop.surface.name) })
-end
-
-local function unit_vector(dx, dy)
-  local len = math.sqrt(dx * dx + dy * dy)
-  if len < 0.001 then return 0, 0 end
-  return dx / len, dy / len
-end
-
-local function job(train, stops)
-  local id, why = remote.call("utl", "send_job", train.id, Const.MOD, stops)
-  return id, why
-end
+local WAIT, warn, unit_vector, job, rail_at = H.WAIT, H.warn, H.unit_vector, H.job, H.rail_at
 
 --- Verband ist bereit (Groups.on_ready): Auftrag anlegen und eine freie Rangierlok suchen. Das Ziel
 --- (ein freies Gleis mit dem Namen) wird erst gewählt, wenn eine Lok losfährt.
@@ -43,18 +30,14 @@ function Shunter.request(group, to_name)
     warn(from, "warn-no-target")
     return
   end
+  group.busy = true
   storage.tasks[#storage.tasks + 1] = { group = group, to_name = to_name }
   Shunter.assign()
 end
 
+--- Frei: keine Rangierlok unterwegs dorthin und keine Wagen da (außer bei „an vorhandene Wagen anhängen“).
 local function free_target(unit)
-  return not storage.reserved[unit] and not Groups.occupied(unit)
-end
-
-local RAILS = { "straight-rail", "curved-rail-a", "curved-rail-b", "half-diagonal-rail" }
-
-local function rail_at(surface, position)
-  return surface.find_entities_filtered({ position = position, radius = 1.5, type = RAILS })[1]
+  return not storage.reserved[unit] and (Registry.append(unit) or not Groups.occupied(unit))
 end
 
 --- Zum Ende des Verbands schicken: Punkt Const.APPROACH Kacheln davor. Welches Ende, entscheidet die Wegsuche des
@@ -76,7 +59,7 @@ local function fetch(task, train)
       if e == b then ux, uy = -ux, -uy end
     end
     local at = { x = e.position.x + ux * reach, y = e.position.y + uy * reach }
-    options[#options + 1] = { e = e, at = at, d = (e.position.x - q.x) ^ 2 + (e.position.y - q.y) ^ 2 }
+    options[#options + 1] = { e = e, at = at, ux = ux, uy = uy, d = (e.position.x - q.x) ^ 2 + (e.position.y - q.y) ^ 2 }
   end
   table.sort(options, function(x, y) return x.d < y.d end)
   local goals, owner = {}, {}
@@ -95,7 +78,11 @@ local function fetch(task, train)
   end
   for _, option in ipairs(options) do
     local e = option.e
-    local id = job(train, { { position = option.at, surface = e.surface.index, wait = WAIT } })
+    -- ohne „heranfahren“: Halt gegenüber den Wagen anfahren (dort steht die Lok direkt an ihnen), sonst den Punkt
+    -- davor und das letzte Stück heranfahren
+    local stop = H.facing_stop(e, option.ux, option.uy, train)
+    local goal = stop and { stop = stop, wait = WAIT } or { position = option.at, surface = e.surface.index, wait = WAIT }
+    local id = job(train, { goal })
     if id then
       task.job, task.target, task.phase = id, e, "fetch"
       storage.jobs[id] = task
@@ -115,7 +102,7 @@ function Shunter.assign()
       table.remove(tasks, i)
     else
       local from = Registry.stop(task.group.unit)
-      task.to = from and Registry.find_yard(task.to_name, from, free_target)
+      task.to = task.fixed or (from and Registry.find_yard(task.to_name, from, free_target))
       local p = task.group.wagons[1].position
       local list = {}
       for id in pairs(free) do
@@ -157,29 +144,17 @@ local function pushing(task, train, stop)
   return leading ~= nil and not task.locos[leading.unit_number]
 end
 
---- Wende-Halte, nächste zuerst (bei mehreren Rangierbahnhöfen auf der Karte die eigene).
-local function turns(train)
-  local q = train.front_stock.position
-  local list = {}
-  for unit, role in pairs(storage.stations) do
-    local stop = role == Const.ROLE.turn and Registry.stop(unit)
-    if stop and stop.surface == train.front_stock.surface then
-      list[#list + 1] = { unit = unit, d = (stop.position.x - q.x) ^ 2 + (stop.position.y - q.y) ^ 2 }
-    end
-  end
-  table.sort(list, function(a, b) return a.d < b.d end)
-  return list
-end
-
 --- Auftrag zum Ziel: direkt, wenn die Wagen dabei vorn sind; sonst über die nächste Wende (dort wechselt die
 --- Richtung); geht beides nicht, direkt.
 local function deliver(task, train)
+  local onto = Onto.deliver(task, train)
+  if onto ~= nil then return onto end
   local target = { station = task.to, wait = WAIT }
   local stop = Registry.stop(task.to)
   local id
   if stop and pushing(task, train, stop) then id = job(train, { target }) end
   if not id then
-    for _, turn in ipairs(turns(train)) do
+    for _, turn in ipairs(H.turns(train)) do
       id = job(train, { { station = turn.unit, wait = WAIT }, target })
       if id then break end
     end
@@ -191,25 +166,41 @@ local function deliver(task, train)
   return true
 end
 
---- Rangierlok freigeben: automatisch, bei UTL loslassen – sie fährt mit ihrem Fahrplan ins Depot.
-local function home(train)
-  train.manual_mode = false
-  remote.call("utl", "release_train", train.id)
+--- „Wagen je Rangierfahrt“: Nach dem Ankuppeln nur die ersten `n` Wagen (von der Lok aus) behalten, der Rest
+--- bleibt als neuer Verband am Wagenbahnhof stehen und meldet sich wieder. Liefert den Zug der Rangierlok.
+local function take(task, train, n)
+  local c = train.carriages
+  local first, step = 1, 1
+  if not task.locos[c[1].unit_number] then first, step = #c, -1 end
+  local i = first
+  while c[i] and task.locos[c[i].unit_number] do i = i + step end
+  local last = i + step * (n - 1)
+  local after = c[last + step]
+  if not (c[last] and after) or task.locos[after.unit_number] then return train end
+  local kept, rest = Couple.split(c[last], after)
+  if rest then Groups.add(task.group.unit, rest) end
+  return kept or train
 end
 
 --- Heranschieben fertig (aus dem Rangier-Takt).
 function Shunter.coupled(task, train, ok)
+  if task.phase == "onto-couple" then
+    Onto.finish(task, train, ok)
+    return
+  end
   if not ok then
     storage.reserved[task.to] = nil
     warn(Registry.stop(task.group.unit), "warn-shunt-failed")
-    home(train)
+    H.home(train)
     return
   end
+  local n = Registry.count(task.group.unit)
+  if n > 0 then train = take(task, train, n) end
   Gate.refresh()
   if not deliver(task, train) then
     storage.reserved[task.to] = nil
     warn(Registry.stop(task.to), "warn-unreachable")
-    home(train)
+    H.home(train)
   end
 end
 
@@ -218,8 +209,14 @@ function Shunter.job_finished(event)
   local task = storage.jobs[event.job_id]
   if not task then return end
   storage.jobs[event.job_id] = nil
-  if task.phase ~= "fetch" then return end -- deliver endet mit cancel_job beim Abkuppeln
   local train = event.train
+  if task.phase == "onto" then
+    if not (train and train.valid and not event.canceled and Onto.arrived(task, train)) then
+      storage.reserved[task.to] = nil
+    end
+    return
+  end
+  if task.phase ~= "fetch" then return end -- deliver endet mit cancel_job beim Abkuppeln
   if not (train and train.valid) then return end
   if event.canceled or not (task.target.valid and Groups.valid(task.group)) then
     storage.reserved[task.to] = nil
@@ -234,19 +231,16 @@ function Shunter.job_finished(event)
   local function d(e) return (e.position.x - t.x) ^ 2 + (e.position.y - t.y) ^ 2 end
   local head = d(front) <= d(back) and front or back
   local fx, fy = unit_vector(t.x - head.position.x, t.y - head.position.y)
-  Crawl.start(head, task.target, fx, fy, task)
-end
-
---- Lok-Block der Rangierlok von den Wagen trennen. Liefert (Rangierlok, Wagen) oder nil.
-local function split(task, train)
-  local carriages = train.carriages
-  for i = 1, #carriages - 1 do
-    local a, b = carriages[i], carriages[i + 1]
-    local la, lb = task.locos[a.unit_number], task.locos[b.unit_number]
-    if la and not lb then return Couple.split(a, b) end
-    if lb and not la then return Couple.split(b, a) end
+  -- steht die Lok schon an den Wagen (Halt gegenüber), gleich kuppeln; sonst heranfahren
+  local ids = Couple.announce(head, task.target)
+  local joined = Couple.try(head, Geometry.ahead(head, fx, fy), task.target)
+  if joined then
+    Couple.finish(ids, joined)
+    Shunter.coupled(task, joined, true)
+    return
   end
-  return nil
+  Couple.finish(ids, train)
+  Crawl.start(head, task.target, fx, fy, task)
 end
 
 --- Ereignis on_train_arrived. Liefert true, wenn es eine eigene Rangierfahrt war.
@@ -260,13 +254,15 @@ function Shunter.arrived(event)
   remote.call("utl", "hold_train", train.id, Const.MOD)
   remote.call("utl", "cancel_job", event.job_id)
   train.manual_mode = true
-  local loco, wagons = split(task, train)
+  local loco, wagons = H.split(task, train)
   storage.reserved[task.to] = nil
   if wagons then Groups.add(task.to, wagons) end
-  home(loco or train)
+  H.home(loco or train)
   Gate.refresh()
   Shunter.assign()
   return true
 end
+
+Onto.on_assign = Shunter.assign
 
 return Shunter

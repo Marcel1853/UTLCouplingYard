@@ -5,6 +5,19 @@
 > **Pre-beta – test phase.** This is an early test version. Features, settings and station data may still change,
 > and things may not work as intended yet. Please try it in a separate save first and report problems or ideas.
 
+> **New in 0.0.3 – works a bit differently now, feedback welcome:**
+> - **Shunting without moving up:** with the map setting "move up to waiting wagons" off (default), a shunting
+>   locomotive stops at a train stop facing the wagons – placed like a handover on one track – and couples right
+>   away. Only where there is no such stop, or a signal stands in between, it drives the last part itself at normal
+>   speed. With the setting on, it moves up at walking pace as before.
+> - **Beta: have wagons attached from behind** (map setting, off by default): a train with locomotives at the front
+>   only waits, and a shunting locomotive attaches the wagons to its rear. Trains with locomotives facing both ways
+>   work exactly as before.
+> - **Wagons per shunting trip** and **add to standing wagons** (queues), an own tab in the UTL Manager, tips and
+>   tricks, and six more languages.
+>
+> Not everything is final yet – tell me what works for you and what does not, in the discussion or on GitHub.
+
 Add-on for **Unified Train Logistics (UTL)**: coupling and uncoupling. Trains leave wagons at stations, shunting
 locomotives fetch, bring and park them. Made for good-looking stations and role play. Requires UTLogistics 0.0.20
 or newer.
@@ -19,7 +32,8 @@ Pick them in the UTL station window, below the UTL roles.
     wagons; map setting "move up to waiting wagons" lets it move up to 40 tiles slowly),
   - then carries on with its schedule. Wait conditions at this stop do not matter.
 
-  Mode per station: leave and pick up, only leave, only pick up. **Control train limit**: no train comes while
+  Mode per station: leave and pick up, only leave, only pick up, have wagons attached from behind (see below).
+  **Control train limit**: no train comes while
   wagons still stand where it would stop (leave), or until wagons wait ahead of the stop (pick up).
 - **Shunting depot** – depot for shunting locomotives. UTL never dispatches them. A shunting locomotive must drive
   both ways: at least one locomotive per direction (e.g. one facing left, one facing right). Without a schedule it
@@ -39,6 +53,18 @@ Several wagon yards may share a name (e.g. three tracks called "Loading bay"): t
 free one. It arrives pushing the wagons, so dead-end tracks work; if needed it changes direction at a turnaround
 first.
 
+**Wagons per shunting trip** (wagon yard where the wagons wait): the shunting locomotive takes only that many
+wagons – the ones at its end – and fetches the rest on the next trips. **Add to standing wagons** (target): wagons
+are brought even if wagons already stand there, and coupled to their end – a queue, e.g. for loading directly from
+wagons into machines. Both can be switched off in the map settings.
+
+## Attaching wagons from behind
+
+Mode **Have wagons attached from behind**: a train stops and waits. A shunting locomotive fetches wagons from the
+wagon yard named in **Attach wagons from:**, pushes them up to the rear of the train and couples them; the train then
+leaves pulling them. A mainline train with locomotives at the front only can take wagons this way – like a real
+railway, where the shunting locomotive places the wagons at the train. Can be switched off in the map settings.
+
 ## Relay
 
 Let trains run only part of the way and hand the wagons over. Give a wagon yard a **relay number** (station window),
@@ -56,7 +82,7 @@ empty ones.
 
 "UTL Coupling Yard – large network": a network of its own with 4 × 3 roundabouts, double-track lines and signals,
 UTL stations and 33 UTL trains running deliveries. Two blocks hold an ore mine and a factory, each with a transfer yard
-and a shunting yard: the mainline train leaves its wagons, runs around and takes the ones provided; the shunting
+and a shunting yard: the mainline train (one locomotive at the front) leaves its wagons and waits at the departure stop, where the shunting locomotive attaches the wagons provided; the shunting
 locomotive moves the wagons to the loading or unloading tracks and back. This scenario is still an early draft: it
 shows the idea but is not yet a finished, fully tested showcase.
 
@@ -66,6 +92,8 @@ shows the idea but is not yet a finished, fully tested showcase.
 - Leave room ahead of a wagon yard for waiting wagons, and use rail signals so trains do not run into parked wagons.
 - Handover on a single track: two stops facing each other at the same spot. One train pushes the wagons up to its stop, uncouples and backs off; the other comes from the opposite side, couples and pulls them away. Both need locomotives facing both ways.
 - UTL does not send shunting locomotives to refuel: give them plenty of fuel or a "fuel low" interrupt.
+- Tips and tricks (in game): own category "UTL Coupling Yard" with small scenes.
+- UTL Manager: own tab "UTL Coupling Yard" with the map settings of this mod and an overview.
 
 ## Performance
 

@@ -16,6 +16,16 @@ function Crawl.start(head, target, fx, fy, task, info)
   }
 end
 
+--- Tempo: Mit der Karteneinstellung „heranfahren“ im Schritttempo. Sonst zügig, vor den Wagen auf Kuppeltempo
+--- abbremsen – nur dort, wo es nicht anders geht: Zwischen Halt und Wagen liegt ein Signal (in einen Block mit
+--- stehenden Wagen fährt kein Zug selbst ein), oder es gibt keinen Halt direkt gegenüber den Wagen.
+local function speed(c)
+  if settings.global["ucy-crawl"].value then return Const.CRAWL_SPEED end
+  local p, q = c.head.position, c.target.position
+  local gap = math.sqrt((p.x - q.x) ^ 2 + (p.y - q.y) ^ 2) - 7 -- Abstand der Kupplungen (Fahrzeuge je 7 lang)
+  return math.max(Const.CRAWL_SPEED, math.min(Const.APPROACH_SPEED, gap * Const.APPROACH_BRAKE))
+end
+
 --- Ein Schritt. Liefert den Zug, wenn der Vorgang fertig ist (gekuppelt oder aufgegeben), sonst nil.
 --- Liefert false, wenn der Zug verschwunden ist.
 local function step(c)
@@ -44,7 +54,7 @@ local function step(c)
     Couple.finish(c.ids, train)
     return train
   end
-  train.speed = Geometry.speed_towards_head(train, c.head, Const.CRAWL_SPEED)
+  train.speed = Geometry.speed_towards_head(train, c.head, speed(c))
   return nil
 end
 

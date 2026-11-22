@@ -9,6 +9,8 @@ local Groups = {}
 
 --- Wird gesetzt (scripts/core/setup.lua): Verband ist bereit zum Weiterbringen → Rangierlok anfordern.
 Groups.on_ready = function(group, to) end
+--- Wird gesetzt: Wartet ein Zug auf genau diese Wagen (Betriebsart „anstellen“)? true = vergeben.
+Groups.claim = function(group) return false end
 
 --- Steht der Verband noch so da (alle Wagen gültig, ein Zug, keine Lok)?
 function Groups.valid(group)
@@ -68,7 +70,7 @@ function Groups.add(unit, train, carrying)
   local group = { unit = unit, wagons = {}, delivery = carrying or nil }
   for i, w in ipairs(train.carriages) do group.wagons[i] = w end
   storage.parked[unit] = group
-  if carrying then return group end
+  if carrying or Groups.claim(group) then return group end
   local to, when = Registry.shunt(unit)
   if not to then return group end
   if Groups.ready(group, when) then
@@ -93,36 +95,49 @@ function Groups.occupied(unit)
   return false
 end
 
---- Wagen erfassen, die schon an einem Wagenbahnhof stehen (aus Blaupausen oder von Hand hingestellt):
---- eine kleine Suche entlang des Gleises an der Haltestelle. Nur beim Start bzw. auf Anfrage.
-function Groups.scan(unit)
-  local stop = Registry.stop(unit)
-  if not stop then return 0 end
+--- Lokfreie Züge entlang des Gleises an einer Haltestelle (Const.SEARCH in beide Richtungen): { train, d }.
+local function nearby(stop)
   local o = stop.orientation * 2 * math.pi
   local fx, fy = math.sin(o), -math.cos(o)
   local p, r = stop.position, Const.SEARCH
   local area = { { p.x - math.abs(fx) * r - 4, p.y - math.abs(fy) * r - 4 },
     { p.x + math.abs(fx) * r + 4, p.y + math.abs(fy) * r + 4 } }
-  local seen, count = {}, 0
+  local list, seen = {}, {}
   for _, e in pairs(stop.surface.find_entities_filtered({ area = area, type = Const.ROLLING_STOCK })) do
     local train = e.train
     if train and not seen[train.id] then
       seen[train.id] = true
       local locos = train.locomotives
-      if #locos.front_movers + #locos.back_movers == 0 and not Groups.occupied(unit) then
-        Groups.add(unit, train)
-        count = count + 1
+      if #locos.front_movers + #locos.back_movers == 0 then
+        local q = train.front_stock.position
+        list[#list + 1] = { train = train, d = (q.x - p.x) ^ 2 + (q.y - p.y) ^ 2 }
       end
     end
   end
-  return count
+  return list
 end
 
---- Alle Wagenbahnhöfe erfassen (on_init, Fernaufruf „scan“).
+--- Wagen erfassen, die schon an Wagenbahnhöfen stehen (aus Blaupausen oder von Hand hingestellt): eine kleine
+--- Suche entlang des Gleises an jeder Haltestelle; jeder Wagenverband gehört zum nächsten Wagenbahnhof. Nur beim
+--- Start bzw. auf Anfrage (on_init, Fernaufruf „scan“). Liefert die Zahl neuer Verbände.
 function Groups.scan_all()
-  local count = 0
+  local best = {}
   for unit, role in pairs(storage.stations) do
-    if role == Const.ROLE.yard then count = count + Groups.scan(unit) end
+    local stop = role == Const.ROLE.yard and Registry.stop(unit)
+    if stop and not Groups.occupied(unit) then
+      for _, found in ipairs(nearby(stop)) do
+        local id = found.train.id
+        if not best[id] or found.d < best[id].d then best[id] = { unit = unit, train = found.train, d = found.d } end
+      end
+    end
+  end
+  local count, used = 0, {}
+  for _, entry in pairs(best) do
+    if entry.train.valid and not used[entry.unit] and not Groups.occupied(entry.unit) then
+      used[entry.unit] = true
+      Groups.add(entry.unit, entry.train)
+      count = count + 1
+    end
   end
   return count
 end

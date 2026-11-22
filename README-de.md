@@ -6,6 +6,19 @@
 > noch ändern, und manches läuft vielleicht noch nicht wie gedacht. Bitte zuerst in einem eigenen Spielstand
 > ausprobieren und Probleme oder Ideen melden.
 
+> **Neu in 0.0.3 – funktioniert jetzt etwas anders, Rückmeldungen erwünscht:**
+> - **Rangieren ohne Heranfahren:** Ist die Karteneinstellung „an wartende Wagen heranfahren“ aus (Vorgabe), hält
+>   die Rangierlok an einem Halt gegenüber den Wagen – gesetzt wie bei der Übergabe auf einem Gleis – und kuppelt
+>   sofort. Nur wo es keinen solchen Halt gibt oder ein Signal dazwischen steht, fährt sie das letzte Stück selbst,
+>   zügig. Mit der Einstellung fährt sie wie bisher im Schritttempo heran.
+> - **Beta: Wagen von hinten anstellen lassen** (Karteneinstellung, standardmäßig aus): Ein Zug mit Loks nur vorn
+>   wartet, eine Rangierlok stellt ihm die Wagen hinten an. Züge mit Loks in beide Richtungen funktionieren genau wie
+>   bisher.
+> - **Wagen je Rangierfahrt** und **an stehende Wagen anhängen** (Wagenreihen), eigener Reiter im UTL-Manager,
+>   Tipps und Tricks und sechs weitere Sprachen.
+>
+> Noch ist nicht alles endgültig – schreibt mir, was bei euch klappt und was nicht, in der Diskussion oder auf GitHub.
+
 Add-on für **Unified Train Logistics (UTL)**: An- und Abkuppeln. Züge lassen Wagen an Bahnhöfen stehen,
 Rangierloks holen, bringen und stellen sie ab. Gedacht für schöne Bahnhöfe und Rollenspiel. Braucht UTLogistics
 0.0.20 oder neuer.
@@ -20,7 +33,8 @@ Wählbar im UTL-Stationsfenster, unter den UTL-Rollen.
     an den Wagen hält; Karteneinstellung „an wartende Wagen heranfahren“ lässt ihn bis 40 Kacheln langsam vorfahren),
   - und fährt dann mit seinem Fahrplan weiter. Wartebedingungen spielen an diesem Halt keine Rolle.
 
-  Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen. **Zuglimit steuern**: Kein Zug kommt,
+  Betriebsart je Station: abstellen und abholen, nur abstellen, nur abholen, Wagen von hinten anstellen lassen
+  (siehe unten). **Zuglimit steuern**: Kein Zug kommt,
   solange dort noch Wagen stehen, wo er halten würde (abstellen), bzw. bis Wagen vor dem Halt warten (abholen).
 - **Rangierdepot** – Depot für Rangierloks. UTL vermittelt sie nie. Eine Rangierlok muss in beide Richtungen
   fahren: mindestens eine Lok je Richtung (z. B. eine nach links, eine nach rechts). Ohne Fahrplan bekommt sie das
@@ -40,6 +54,18 @@ Mehrere Wagenbahnhöfe dürfen gleich heißen (z. B. drei Gleise „Ladebucht“
 Sie kommt mit den Wagen voran an, Stumpfgleise gehen also; falls nötig wechselt sie vorher an einer Wende die
 Richtung.
 
+**Wagen je Rangierfahrt** (Wagenbahnhof, an dem die Wagen warten): Die Rangierlok nimmt nur so viele Wagen mit –
+die an ihrem Ende – und holt den Rest bei den nächsten Fahrten. **An stehende Wagen anhängen** (Ziel): Wagen kommen
+auch dann, wenn dort schon Wagen stehen, und werden hinten angekuppelt – eine Wagenreihe, z. B. zum Beladen direkt
+aus Wagen in Maschinen. Beides lässt sich in den Karteneinstellungen abschalten.
+
+## Wagen von hinten anstellen
+
+Betriebsart **Wagen von hinten anstellen lassen**: Ein Zug hält und wartet. Eine Rangierlok holt Wagen vom
+Wagenbahnhof aus **Wagen anstellen von:**, schiebt sie an das Ende des Zuges und kuppelt sie an; der Zug fährt dann
+gezogen weiter. So nimmt auch ein Streckenzug mit Loks nur vorn Wagen mit – wie bei der echten Bahn, wo die
+Rangierlok die Wagen an den Zug stellt. In den Karteneinstellungen abschaltbar.
+
 ## Staffel
 
 Züge nur einen Teil der Strecke fahren lassen und die Wagen übergeben. Einem Wagenbahnhof eine
@@ -57,7 +83,7 @@ leere Wagen tauscht.
 
 „UTL Coupling Yard – Großnetz“: eigenes Netz aus 4 × 3 Kreiseln mit zweigleisigen Strecken und Signalen, UTL-Bahnhöfe
 und 33 UTL-Züge mit Lieferungen. In zwei Blöcken liegen eine Erzmine und eine Fabrik, jede mit Übergabebahnhof und
-Rangierbahnhof: Der Streckenzug stellt seine Wagen ab, setzt um und holt die bereitgestellten; die Rangierlok bringt
+Rangierbahnhof: Der Streckenzug (eine Lok vorn) stellt seine Wagen ab und wartet an der Abfahrt, wo ihm die Rangierlok die bereitgestellten Wagen anstellt; die Rangierlok bringt
 die Wagen an die Lade- bzw. Entladegleise und zurück. Dieses Szenario ist noch ein früher Entwurf: Es zeigt die Idee,
 ist aber noch kein fertiger, gründlich getesteter Aufbau.
 
@@ -68,6 +94,8 @@ ist aber noch kein fertiger, gründlich getesteter Aufbau.
   fahren.
 - Übergabe auf einem Gleis: zwei Haltestellen gegenüber an derselben Stelle. Ein Zug schiebt die Wagen bis zu seinem Halt, kuppelt ab und fährt rückwärts weg; der andere kommt von der Gegenseite, kuppelt an und zieht sie weg. Beide brauchen Loks in beide Richtungen.
 - UTL schickt Rangierloks nicht zum Tanken: viel Brennstoff mitgeben oder eine Unterbrechung „Brennstoff niedrig“.
+- Tipps und Tricks (im Spiel): eigene Kategorie „UTL Coupling Yard“ mit kleinen Szenen.
+- UTL-Manager: eigener Reiter „UTL Coupling Yard“ mit den Karteneinstellungen dieses Mods und einer Übersicht.
 
 ## Leistung
 
