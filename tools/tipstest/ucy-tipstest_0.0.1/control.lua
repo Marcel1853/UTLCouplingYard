@@ -17,6 +17,11 @@ script.on_nth_tick(30, function(e)
       #t.carriages, #locos.front_movers + #locos.back_movers, t.front_stock.position.x, t.state)
   end
   table.sort(parts)
+  local worst = 1 -- niedrigster Zustand aller Fahrzeuge (unter 1 = Zusammenstoß)
+  for _, v in pairs(game.surfaces[1].find_entities_filtered({ type = { "locomotive", "cargo-wagon" } })) do
+    worst = math.min(worst, v.health / v.max_health)
+  end
+  parts[#parts + 1] = ("Zustand min %.0f %%"):format(worst * 100)
   log(("[TIPS] %s %d s: %s | Rangierloks %s"):format(scene, (e.tick - 30) / 60, table.concat(parts, " | "),
     serpent.line(remote.call("UTLCouplingYard", "get_shunters"))))
 end)

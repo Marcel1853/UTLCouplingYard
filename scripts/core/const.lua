@@ -21,6 +21,8 @@ Const.ROLLING_STOCK = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-w
 
 Const.TICK = 2          -- Takt beim Rangieren (nur angemeldet, solange etwas zu tun ist; 1 nutzt schon die Sperre)
 Const.CRAWL_SPEED = 0.05 -- Schritttempo beim Heranschieben (Kacheln je Tick)
+Const.APPROACH_SPEED = 0.3 -- Rangierlok ohne „heranfahren“: Höchsttempo auf dem letzten Stück (Kacheln je Tick)
+Const.APPROACH_BRAKE = 0.02 -- … und so viel Tempo je Kachel Abstand (bremst vor den Wagen auf Schritttempo)
 Const.SEARCH = 40       -- so weit vor dem Zug (Kacheln) werden Wagen zum Abholen gesucht
 Const.STALL_STEPS = 30  -- so viele Takte ohne Bewegung (eine Sekunde): Heranschieben aufgeben
 Const.CRAWL_TIMEOUT = 60 * 60 -- spätestens nach einer Minute aufgeben

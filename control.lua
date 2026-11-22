@@ -61,6 +61,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function(event)
   Section.checked(event)
   Manager.checked(event)
 end)
+script.on_event(defines.events.on_gui_click, Manager.click)
 
 -- Wagen gebaut oder entfernt: gesperrte Halte neu bewerten (nur wenn es welche gibt)
 local STOCK = { { filter = "rolling-stock" } }

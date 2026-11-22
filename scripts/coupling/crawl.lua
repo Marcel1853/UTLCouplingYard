@@ -16,6 +16,16 @@ function Crawl.start(head, target, fx, fy, task, info)
   }
 end
 
+--- Tempo: Mit der Karteneinstellung „heranfahren“ (und immer am Wagenbahnhof, wo es nur damit läuft) im
+--- Schritttempo. Sonst fährt die Rangierlok das letzte Stück zügig und bremst vor den Wagen auf Kuppeltempo ab –
+--- sie muss es selbst fahren, weil es oft über ein Signal in den Block der Wagen geht.
+local function speed(c)
+  if not c.task or settings.global["ucy-crawl"].value then return Const.CRAWL_SPEED end
+  local p, q = c.head.position, c.target.position
+  local gap = math.sqrt((p.x - q.x) ^ 2 + (p.y - q.y) ^ 2) - 7 -- Abstand der Kupplungen (Fahrzeuge je 7 lang)
+  return math.max(Const.CRAWL_SPEED, math.min(Const.APPROACH_SPEED, gap * Const.APPROACH_BRAKE))
+end
+
 --- Ein Schritt. Liefert den Zug, wenn der Vorgang fertig ist (gekuppelt oder aufgegeben), sonst nil.
 --- Liefert false, wenn der Zug verschwunden ist.
 local function step(c)
@@ -44,7 +54,7 @@ local function step(c)
     Couple.finish(c.ids, train)
     return train
   end
-  train.speed = Geometry.speed_towards_head(train, c.head, Const.CRAWL_SPEED)
+  train.speed = Geometry.speed_towards_head(train, c.head, speed(c))
   return nil
 end
 
