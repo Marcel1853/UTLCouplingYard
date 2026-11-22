@@ -3,6 +3,7 @@
 --- Übersicht, die Rangierloks und die Züge, die auf angestellte Wagen warten. UTL ruft `build` beim Wählen des
 --- Reiters und bei ⟲ auf; nach einer Änderung baut der Reiter sich selbst neu.
 local Const = require("scripts.core.const")
+local Registry = require("scripts.stations.registry")
 
 local Manager = {}
 
@@ -101,9 +102,9 @@ local function shunters_box(parent)
   end
   local t = grid(body, 3)
   for id, unit in pairs(storage.shunters) do
-    local stop = storage.stops[unit]
+    local stop = Registry.stop(unit)
     t.add({ type = "label", style = "bold_label", caption = { "utl-coupling-yard.manager-train", id } })
-    local depot = t.add({ type = "label", caption = stop and stop.valid and stop.backer_name or "?" })
+    local depot = t.add({ type = "label", caption = stop and stop.backer_name or "?" })
     depot.style.width = 360
     local free = storage.free[id] ~= nil
     t.add({ type = "label", caption = free and { "utl-coupling-yard.manager-free" }
@@ -116,10 +117,10 @@ local function waiting_box(parent)
   local body = section(parent, { "utl-coupling-yard.manager-attach" })
   local t = grid(body, 3)
   for unit, waiting in pairs(storage.attach) do
-    local stop = storage.stops[unit]
+    local stop = Registry.stop(unit)
     local train = waiting.ref.valid and waiting.ref.train
     t.add({ type = "label", style = "bold_label", caption = train and { "utl-coupling-yard.manager-train", train.id } or "?" })
-    local name = t.add({ type = "label", caption = stop and stop.valid and stop.backer_name or "?" })
+    local name = t.add({ type = "label", caption = stop and stop.backer_name or "?" })
     name.style.width = 360
     t.add({ type = "label", caption = { "", "← ", waiting.from or "?" } })
   end

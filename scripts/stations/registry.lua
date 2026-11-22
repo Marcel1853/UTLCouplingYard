@@ -8,14 +8,21 @@ local Registry = {}
 local OWN = {}
 for _, key in pairs(Const.ROLE) do OWN[key] = true end
 
+--- Haltestelle als LuaEntity: UTLs get_stations liefert sie als unit_number, die Stations-Ereignisse als Entity.
+local function entity(stop)
+  if type(stop) == "number" then return game.get_entity_by_unit_number(stop) end
+  return stop
+end
+
 --- Einmal komplett neu aufbauen (on_init, on_configuration_changed).
 function Registry.rebuild()
   storage.stations, storage.stops, storage.utl_stops = {}, {}, {}
   for _, s in pairs(remote.call("utl", "get_stations") --[[@as table]]) do
-    storage.utl_stops[s.unit] = s.stop
+    local stop = entity(s.stop)
+    storage.utl_stops[s.unit] = stop
     if OWN[s.addon_role] then
       storage.stations[s.unit] = s.addon_role
-      storage.stops[s.unit] = s.stop
+      storage.stops[s.unit] = stop
     end
   end
 end
@@ -24,8 +31,9 @@ end
 function Registry.update(event)
   local role = event.addon_role
   storage.stations[event.station] = OWN[role] and role or nil
-  storage.stops[event.station] = OWN[role] and event.stop or nil
-  storage.utl_stops[event.station] = event.stop
+  local stop = entity(event.stop)
+  storage.stops[event.station] = OWN[role] and stop or nil
+  storage.utl_stops[event.station] = stop
 end
 
 --- Ereignis on_station_removed.
@@ -92,6 +100,10 @@ end
 --- Haltestelle (LuaEntity) einer Station dieses Mods oder nil.
 function Registry.stop(unit)
   local stop = unit and storage.stops[unit]
+  if type(stop) == "number" then -- aus 0.0.1 bis 0.0.3 gespeichert
+    stop = entity(stop)
+    storage.stops[unit] = stop
+  end
   return stop and stop.valid and stop or nil
 end
 
@@ -123,8 +135,8 @@ local RELAY = { type = "virtual", name = "ucy-relay" }
 
 --- Wert des Staffel-Signals an der Haltestelle einer beliebigen UTL-Station (0 = keins).
 function Registry.relay_signal(unit)
-  local stop = unit and storage.utl_stops[unit]
-  if not (stop and stop.valid) then return 0 end
+  local stop = Registry.utl_stop(unit)
+  if not stop then return 0 end
   local W = defines.wire_connector_id
   return stop.get_signal(RELAY, W.circuit_red, W.circuit_green) or 0
 end
@@ -145,6 +157,10 @@ end
 --- Haltestelle einer beliebigen UTL-Station oder nil.
 function Registry.utl_stop(unit)
   local stop = unit and storage.utl_stops[unit]
+  if type(stop) == "number" then
+    stop = entity(stop)
+    storage.utl_stops[unit] = stop
+  end
   return stop and stop.valid and stop or nil
 end
 

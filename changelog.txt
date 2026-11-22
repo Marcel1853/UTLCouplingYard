@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 2026-11-22
+  Bugfixes:
+    - Crash when loading a save with wagon yards after a mod was added, removed or updated (registry.lua:95, "attempt to index local 'stop' (a number value)"): UTL hands over train stops as numbers when the station list is rebuilt.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.3
 Date: 2026-11-22
   Features:
