@@ -8,6 +8,7 @@
 --- heranschieben und kuppeln → Rangierlok abtrennen, beide bekommen ihren eigenen Fahrplan zurück.
 local Const = require("scripts.core.const")
 local Registry = require("scripts.stations.registry")
+local Couple = require("scripts.coupling.couple")
 local Crawl = require("scripts.coupling.crawl")
 local Geometry = require("scripts.coupling.geometry")
 local Schedule = require("scripts.coupling.schedule")
@@ -99,8 +100,12 @@ function Onto.deliver(task, train)
   local reach = Const.APPROACH + 4
   local at = { x = back.position.x - fx * reach, y = back.position.y - fy * reach }
   local goal = { position = at, surface = back.surface.index, wait = H.WAIT }
+  local rail = H.rail_at(back.surface, at)
+  -- ohne „heranfahren“: Halt gegenüber dem stehenden Zug anfahren (dort stehen die Wagen direkt an ihm)
+  local facing = H.facing_stop(back, -fx, -fy, train)
+  if facing then goal, rail = { stop = facing, wait = H.WAIT }, facing.connected_rail end
   local id
-  if H.wagons_lead(task, train, H.rail_at(back.surface, at)) then id = H.job(train, { goal }) end
+  if H.wagons_lead(task, train, rail) then id = H.job(train, { goal }) end
   if not id then
     for _, turn in ipairs(H.turns(train)) do
       id = H.job(train, { { station = turn.unit, wait = H.WAIT }, goal })
@@ -133,6 +138,15 @@ function Onto.arrived(task, train)
   local function d(e) return (e.position.x - t.x) ^ 2 + (e.position.y - t.y) ^ 2 end
   local head = d(front) <= d(back) and front or back
   local fx, fy = H.unit_vector(t.x - head.position.x, t.y - head.position.y)
+  -- stehen die Wagen schon am Zug (Halt gegenüber), gleich kuppeln; sonst heranfahren
+  local ids = Couple.announce(head, task.onto)
+  local joined = Couple.try(head, Geometry.ahead(head, fx, fy), task.onto)
+  if joined then
+    Couple.finish(ids, joined)
+    Onto.finish(task, joined, true)
+    return true
+  end
+  Couple.finish(ids, train)
   Crawl.start(head, task.onto, fx, fy, task)
   return true
 end

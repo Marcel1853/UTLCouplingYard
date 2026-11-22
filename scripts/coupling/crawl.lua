@@ -16,11 +16,11 @@ function Crawl.start(head, target, fx, fy, task, info)
   }
 end
 
---- Tempo: Mit der Karteneinstellung „heranfahren“ (und immer am Wagenbahnhof, wo es nur damit läuft) im
---- Schritttempo. Sonst fährt die Rangierlok das letzte Stück zügig und bremst vor den Wagen auf Kuppeltempo ab –
---- sie muss es selbst fahren, weil es oft über ein Signal in den Block der Wagen geht.
+--- Tempo: Mit der Karteneinstellung „heranfahren“ im Schritttempo. Sonst zügig, vor den Wagen auf Kuppeltempo
+--- abbremsen – nur dort, wo es nicht anders geht: Zwischen Halt und Wagen liegt ein Signal (in einen Block mit
+--- stehenden Wagen fährt kein Zug selbst ein), oder es gibt keinen Halt direkt gegenüber den Wagen.
 local function speed(c)
-  if not c.task or settings.global["ucy-crawl"].value then return Const.CRAWL_SPEED end
+  if settings.global["ucy-crawl"].value then return Const.CRAWL_SPEED end
   local p, q = c.head.position, c.target.position
   local gap = math.sqrt((p.x - q.x) ^ 2 + (p.y - q.y) ^ 2) - 7 -- Abstand der Kupplungen (Fahrzeuge je 7 lang)
   return math.max(Const.CRAWL_SPEED, math.min(Const.APPROACH_SPEED, gap * Const.APPROACH_BRAKE))

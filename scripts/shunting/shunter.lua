@@ -10,6 +10,7 @@ local Const = require("scripts.core.const")
 local Registry = require("scripts.stations.registry")
 local Couple = require("scripts.coupling.couple")
 local Crawl = require("scripts.coupling.crawl")
+local Geometry = require("scripts.coupling.geometry")
 local Groups = require("scripts.shunting.groups")
 local Gate = require("scripts.yard.gate")
 local H = require("scripts.shunting.helpers")
@@ -58,7 +59,7 @@ local function fetch(task, train)
       if e == b then ux, uy = -ux, -uy end
     end
     local at = { x = e.position.x + ux * reach, y = e.position.y + uy * reach }
-    options[#options + 1] = { e = e, at = at, d = (e.position.x - q.x) ^ 2 + (e.position.y - q.y) ^ 2 }
+    options[#options + 1] = { e = e, at = at, ux = ux, uy = uy, d = (e.position.x - q.x) ^ 2 + (e.position.y - q.y) ^ 2 }
   end
   table.sort(options, function(x, y) return x.d < y.d end)
   local goals, owner = {}, {}
@@ -77,7 +78,11 @@ local function fetch(task, train)
   end
   for _, option in ipairs(options) do
     local e = option.e
-    local id = job(train, { { position = option.at, surface = e.surface.index, wait = WAIT } })
+    -- ohne „heranfahren“: Halt gegenüber den Wagen anfahren (dort steht die Lok direkt an ihnen), sonst den Punkt
+    -- davor und das letzte Stück heranfahren
+    local stop = H.facing_stop(e, option.ux, option.uy, train)
+    local goal = stop and { stop = stop, wait = WAIT } or { position = option.at, surface = e.surface.index, wait = WAIT }
+    local id = job(train, { goal })
     if id then
       task.job, task.target, task.phase = id, e, "fetch"
       storage.jobs[id] = task
@@ -226,6 +231,15 @@ function Shunter.job_finished(event)
   local function d(e) return (e.position.x - t.x) ^ 2 + (e.position.y - t.y) ^ 2 end
   local head = d(front) <= d(back) and front or back
   local fx, fy = unit_vector(t.x - head.position.x, t.y - head.position.y)
+  -- steht die Lok schon an den Wagen (Halt gegenüber), gleich kuppeln; sonst heranfahren
+  local ids = Couple.announce(head, task.target)
+  local joined = Couple.try(head, Geometry.ahead(head, fx, fy), task.target)
+  if joined then
+    Couple.finish(ids, joined)
+    Shunter.coupled(task, joined, true)
+    return
+  end
+  Couple.finish(ids, train)
   Crawl.start(head, task.target, fx, fy, task)
 end
 

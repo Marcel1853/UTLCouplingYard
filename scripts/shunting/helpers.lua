@@ -58,6 +58,31 @@ function H.wagons_lead(task, train, rail)
   return leading ~= nil and not task.locos[leading.unit_number]
 end
 
+--- Halt gegenüber einem stehenden Fahrzeug (Marcels Blaupause „Übergabe auf einem Gleis“): Ein Zug, der dort hält,
+--- steht direkt an `stock` (dessen äußeres Ende in Richtung (ux, uy) zeigt) und kuppelt ohne Heranfahren. Nur, wenn
+--- Halt, Fahrzeug und `train` im selben Signalblock liegen – in einen Block mit stehenden Wagen fährt kein Zug ein.
+--- Nur ohne Karteneinstellung „heranfahren“ (sonst fährt die Lok wie bisher im Schritttempo heran). Liefert den Halt
+--- oder nil.
+function H.facing_stop(stock, ux, uy, train)
+  if settings.global["ucy-crawl"].value then return nil end
+  local surface, p = stock.surface, stock.position
+  local tip = { x = p.x + ux * 3.5, y = p.y + uy * 3.5 }
+  local under, own = H.rail_at(surface, p), H.rail_at(surface, train.front_stock.position)
+  if not (under and own and under.is_rail_in_same_rail_block_as(own)) then return nil end
+  local best, best_d
+  for _, stop in pairs(surface.find_entities_filtered({ type = "train-stop", position = tip, radius = 5 })) do
+    local rail = stop.connected_rail
+    local o = stop.orientation * 2 * math.pi
+    local fx, fy = math.sin(o), -math.cos(o)
+    -- Halt zeigt auf das Fahrzeug (der ankommende Zug fährt darauf zu) und liegt im selben Block
+    if rail and fx * (p.x - stop.position.x) + fy * (p.y - stop.position.y) > 0 and rail.is_rail_in_same_rail_block_as(under) then
+      local d = (stop.position.x - tip.x) ^ 2 + (stop.position.y - tip.y) ^ 2
+      if not best_d or d < best_d then best, best_d = stop, d end
+    end
+  end
+  return best
+end
+
 --- Rangierlok freigeben: automatisch, bei UTL loslassen – sie fährt mit ihrem Fahrplan ins Depot.
 function H.home(train)
   train.manual_mode = false

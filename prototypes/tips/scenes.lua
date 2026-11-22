@@ -88,6 +88,7 @@ shunter()
 role(stop("Ankunft", 10, true, true, { "", yard_text("drop"), "\n→ Ladegleis" }), "yard",
   { mode = "drop", shunt_to = "Ladegleis", shunt_when = "now" })
 role(stop("Ladegleis", 40, true, true, { "utl-coupling-yard.role-yard" }), "yard", { mode = "drop" })
+stop("Ankunft Rangierlok", -11, true) -- gegenüber den abgestellten Wagen: die Rangierlok hält direkt an ihnen
 stop("Ende", 56, true)
 local loco = stock("locomotive", -15, 4)
 stock("cargo-wagon", -22, 4, "iron-plate")
@@ -99,7 +100,9 @@ shunter()
 role(stop("Lager", -20, false, true, { "utl-coupling-yard.role-yard" }), "yard", { mode = "drop" })
 role(stop("Abfahrt", 34, true, true, yard_text("attach")), "yard", { mode = "attach", attach_from = "Lager" })
 stop("Ende", 56, true)
-stock("cargo-wagon", -16.5, 4, "iron-plate")
-stock("cargo-wagon", -9.5, 4, "iron-plate")
+stop("Lager Rangierlok", -20, true)   -- gegenüber den Wagen im Lager
+stop("Abfahrt Rangierlok", 27, true)  -- gegenüber dem wartenden Zug: die Wagen stehen direkt an ihm
+stock("cargo-wagon", -16, 4, "iron-plate")
+stock("cargo-wagon", -9, 4, "iron-plate")
 run(stock("locomotive", 0, 4), { "Abfahrt", "Ende" })]]),
 }
