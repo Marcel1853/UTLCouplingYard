@@ -2,15 +2,16 @@
 Version: 0.0.3
 Date: 2026-11-22
   Features:
-    - Wagon yard mode "Have wagons attached from behind": a train stops and waits, a shunting locomotive fetches wagons from the wagon yard named in "Attach wagons from", pushes them up to the rear of the train and couples them. The train then leaves pulling them – no locomotive facing backwards needed. Map setting, on by default – beta feature.
+    - Wagon yard mode "Have wagons attached from behind": a train stops and waits, a shunting locomotive fetches wagons from the wagon yard named in "Attach wagons from", pushes them up to the rear of the train and couples them. The train then leaves pulling them – no locomotive facing backwards needed. Beta feature, map setting off by default.
     - "Wagons per shunting trip": the shunting locomotive takes only the first N wagons, the rest stays and is fetched on the next trip. Map setting, on by default.
     - "Add to standing wagons": shunting locomotives also bring wagons to a wagon yard where wagons already stand and couple them to the end (a queue, e.g. for direct insertion). Same map setting.
     - Tips and tricks: own category with scenes for leaving, picking up, shunting and attaching wagons.
     - Own tab in the UTL Manager, styled like UTL's settings tab: map settings of this mod with reset button and default (admins only), overview, list of shunting locomotives and of trains waiting for attached wagons.
   Changes:
     - Moving up to wagons runs every 2 ticks instead of every 5, so trains and shunting locomotives no longer jerk while they couple.
-    - Without the map setting "move up to waiting wagons", shunting locomotives drive the last part to the wagons at normal speed and brake, instead of at walking pace.
-    - Scenario "large network": the mainline train has one locomotive at the front, leaves its wagons and gets the provided ones attached by the shunting locomotive (no turnaround, no moving up).
+    - Without the map setting "move up to waiting wagons", shunting locomotives stop at a train stop facing the wagons or the waiting train (like a handover on one track) and couple right away. Only where there is no such stop, or a signal stands in between, they drive the last part themselves – at normal speed and braking, instead of at walking pace. Trains at a wagon yard do the same if they did not stop right at the wagons.
+    - Scenario "large network" works with and without the beta feature: with it, the mainline train (one locomotive) gets the provided wagons attached; without it, it (two locomotives back to back) turns and fetches them at the pickup stop. It no longer switches any map setting.
+    - Remote function "set_setting": sets a map setting of this mod (for tests).
   Bugfixes:
     - Wagons already standing were registered at every wagon yard within 40 tiles; the target of a shunting locomotive then counted as occupied and nothing was shunted. Each group of wagons now belongs to the nearest wagon yard only.
     - A shunting locomotive that is already close to the train or wagons it should couple to now moves up directly instead of giving up.

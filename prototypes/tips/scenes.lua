@@ -96,6 +96,7 @@ stock("cargo-wagon", -29, 4, "iron-plate")
 run(loco, { "Ankunft", "Ende" })]]),
   -- Anstellen: Zug (nur eine Lok vorn) wartet, die Rangierlok stellt Wagen an sein Ende, der Zug fährt gezogen weiter
   attach = scene(1800, [[
+remote.call(MOD, "set_setting", "ucy-attach", true) -- Beta-Feature, nur in dieser Simulation eingeschaltet
 shunter()
 role(stop("Lager", -20, false, true, { "utl-coupling-yard.role-yard" }), "yard", { mode = "drop" })
 role(stop("Abfahrt", 34, true, true, yard_text("attach")), "yard", { mode = "attach", attach_from = "Lager" })

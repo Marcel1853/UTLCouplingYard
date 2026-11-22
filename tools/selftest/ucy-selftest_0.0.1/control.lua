@@ -248,6 +248,7 @@ end
 script.on_init(function()
   storage.results = {}
   remote.call("utl", "set_map_config", "utl-debug-log", true)
+  remote.call(MOD, "set_setting", "ucy-attach", true) -- Beta-Feature „anstellen“ für Test J
   storage.t = build()
   remote.call(MOD, "scan") -- Wagen am J- und K-Lager erfassen
   run(storage.t.j_loco, { "J-Halt", "J-Ende" })

@@ -32,6 +32,12 @@ remote.add_interface(Const.MOD, {
   crawl = function(on)
     settings.global["ucy-crawl"] = { value = on == true }
   end,
+  --- Eine Karteneinstellung dieses Mods setzen (Name mit „ucy-“, z. B. für Selbsttests).
+  set_setting = function(name, value)
+    if type(name) ~= "string" or name:sub(1, 4) ~= "ucy-" or not settings.global[name] then return false end
+    settings.global[name] = { value = value }
+    return true
+  end,
 })
 
 script.on_init(function()

@@ -1,5 +1,5 @@
 --- Szenario „UCY-Großnetz“: eigenes Netz aus Kreiseln (Marcels Blaupause „kreisel_signale“) mit UTL-Bahnhöfen und
---- rund 36 UTL-Zügen, die echte Lieferungen fahren. In zwei Blöcken je eine Kuppel-Anlage (facility.lua): Erzmine und
+--- 33 UTL-Zügen, die echte Lieferungen fahren. In zwei Blöcken je eine Kuppel-Anlage (facility.lua): Erzmine und
 --- Fabrik, jede mit Übergabebahnhof und Rangierbahnhof; ein Streckenzug pendelt zwischen beiden quer durchs Netz. Gebaut wird nach einer Sekunde – dann haben sich UTL und UTL Coupling Yard angemeldet.
 local Network = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/network")
 local Stations = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/stations")
@@ -102,7 +102,11 @@ local function setup()
   for _, F in ipairs(frames) do Facility.rails(F) end
   local mine = Facility.build(frames[1], "Erzmine", true)
   Facility.build(frames[2], "Fabrik", false)
-  local train = Facility.train(frames[1], { "Erzmine Ankunft", "Erzmine Abfahrt", "Fabrik Ankunft", "Fabrik Abfahrt" })
+  -- Mit dem Beta-Feature „anstellen“ bekommt der Streckenzug die Wagen angestellt, sonst holt er sie selbst ab
+  local attach = settings.global["ucy-attach"].value
+  local records = attach and { "Erzmine Ankunft", "Erzmine Abfahrt", "Fabrik Ankunft", "Fabrik Abfahrt" }
+    or { "Erzmine Ankunft", "Erzmine Lokwende", "Erzmine Abholung", "Fabrik Ankunft", "Fabrik Lokwende", "Fabrik Abholung" }
+  local train = Facility.train(frames[1], records, attach)
   remote.call("UTLCouplingYard", "scan") -- Wagen erfassen, Sperren setzen
   storage.watch = { train }
   for _, F in ipairs(frames) do

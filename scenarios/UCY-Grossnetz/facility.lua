@@ -3,6 +3,8 @@
 ---   seine Wagen an der Ankunft ab, fährt ein Stück vor zur Abfahrt und wartet. Die Rangierlok stellt ihm die
 ---   bereitgestellten Wagen von hinten an (Betriebsart „Wagen von hinten anstellen lassen“), dann fährt er gezogen
 ---   weiter. Er braucht weder Lok in Gegenrichtung noch Lokwende, und heranfahren muss nur die Rangierlok.
+---   Ohne das Beta-Feature „anstellen“ (Karteneinstellung beim Start aus): Streckenzug mit zwei Loks Rücken an Rücken;
+---   er stellt ab, wendet in der Lokwende und holt die Wagen am Halt „Abholung“ gegenüber der Bereitstellung.
 ---   Rangierbahnhof (unten, Marcels Blaupause rangier.lua): Die Rangierlok holt die abgestellten Wagen von der Ankunft
 ---   an die Ladegleise (Erzmine: beladen) bzw. Entladegleise (Fabrik) und stellt sie danach bereit.
 --- Aufgeschrieben im Rahmen der Strecke über dem Block (Kreisel bei x = 0, Bahnhofsgleis nach Osten bei y = 19).
@@ -12,7 +14,7 @@
 --- über eine S-Kurve zurück aufs Bahnhofsgleis (Einmündung 229).
 --- Signale: an jeder Weiche Kettensignal bei der Einfahrt, normales Signal bei der Ausfahrt. Abgestellte Wagen stehen
 --- immer in einem eigenen Block, nie im Fahrweg eines Zuges aus dem Netz. Das Ankunftsgleis ist dreigeteilt
---- (Grenzen bei x = 124 und 150): Die Rangierlok fährt zum Ankuppeln bis 16 Felder vor die Wagen bzw. den wartenden
+--- (Grenzen bei x = 124 und 148): Die Rangierlok fährt zum Ankuppeln bis 16 Felder vor die Wagen bzw. den wartenden
 --- Zug, immer in einen freien Block, und schiebt dann heran; ebenso vor der Bereitstellung (Grenze bei x = 120). Gemessen: nach Osten steht die Mitte des vordersten
 --- Fahrzeugs 2 Felder vor dem Halt.
 local Common = require("__UTLCouplingYard__/scenarios/UCY-Rangierbahnhof/common")
@@ -21,7 +23,7 @@ local Rangier = require("__UTLCouplingYard__/scenarios/UCY-Grossnetz/rangier")
 local MOD = "UTLCouplingYard"
 local CAPACITY = 4    -- Plätze je Wagen (begrenzt), damit Laden und Entladen nicht ewig dauern
 local BX, BY = 168, 166 -- Lage der Rangier-Blaupause im Rahmen
-local ARRIVE, DEPART, READY = 146, 158, 140
+local ARRIVE, DEPART, READY, FETCH, TURN = 152, 160, 140, 146, 248
 
 local NAMES = { S = "straight-rail", A = "curved-rail-a", B = "curved-rail-b", H = "half-diagonal-rail",
   G = "rail-signal", K = "rail-chain-signal" }
@@ -36,7 +38,7 @@ function Facility.rails(F)
   F:straight(41, 67, 163)          -- Gleis vom Rangierbahnhof mit der Bereitstellung
   F:throat(69, 33, false, "lower") -- Abzweig zum Verbindungsgleis
   F:throat(163, 33, false)         -- Ankunfts- und Abholgleis → y = 33
-  F:straight(33, 179, 183)
+  F:straight(33, 179, 255)         -- Lokwende (Stumpf, nur ohne „anstellen“)
   F:throat(183, 25, false, "lower")
   F:straight(25, 199, 209)
   F:merge(229, 19)
@@ -56,10 +58,12 @@ local function signals(F)
     { true, 89.5, 26.5, 12 }, { true, 89.5, 34.5, 12 }, { false, 89.5, 31.5, 4 },      -- Einmündung Verbindungsgleis
     { false, 109.5, 26.5, 12 }, { true, 109.5, 23.5, 4 },
     { false, 123.5, 23.5, 4 }, { false, 123.5, 26.5, 12 },                             -- Ankunftsgleis: Anfahrt
-    { false, 149.5, 23.5, 4 }, { false, 149.5, 26.5, 12 },                             -- zwischen Ankunft und Abfahrt
+    { false, 147.5, 23.5, 4 }, { false, 147.5, 26.5, 12 },                             -- zwischen Ankunft und Abfahrt
     { false, 110.5, 39.5, 4 }, { false, 110.5, 42.5, 12 },                             -- Bereitstellung: Anfahrt
     { false, 120.5, 39.5, 4 }, { false, 120.5, 42.5, 12 },                             -- Bereitstellung (Block)
+    { false, 143.5, 39.5, 4 }, { false, 143.5, 42.5, 12 },                             -- zwischen Bereitstellung und Abholung
     { true, 161.5, 26.5, 12 }, { true, 161.5, 42.5, 12 }, { false, 161.5, 39.5, 4 },   -- Weiche Ost
+    { true, 201.5, 31.5, 4 }, { false, 201.5, 34.5, 12 },                              -- Lokwende
     { true, 207.5, 26.5, 12 }, { true, 219.5, 20.5, 12 }, { true, 230.5, 20.5, 12 },   -- Einmündung
   }
   for _, s in ipairs(list) do F:signal(s[1], s[2], s[3], s[4]) end
@@ -115,6 +119,9 @@ function Facility.build(F, prefix, mine)
   stops.depart = station(F:stop(name("Abfahrt"), DEPART, 25, false, true), "yard",
     { mode = "attach", attach_from = name("Bereitstellung") })
   stops.ready = station(F:stop(name("Bereitstellung"), READY, 41, false, true), "yard", { mode = "drop" })
+  -- ohne „anstellen“: Abholung gegenüber der Bereitstellung (Signal dazwischen) und Lokwende
+  stops.fetch = station(F:stop(name("Abholung"), FETCH, 41, true, true), "yard", { mode = "pickup", gate = true })
+  stops.turn = F:stop(name("Lokwende"), TURN, 33, false)
   stops.loads = {}
   for _, e in ipairs(Rangier.stops) do
     local stop = F:create("utl-train-stop", e[2] + BX, e[3] + BY, e[4], { raise_built = true })
@@ -160,10 +167,16 @@ function Facility.build(F, prefix, mine)
   return stops
 end
 
---- Streckenzug (eine Lok vorn, zwei leere Wagen) an der Ankunft der Anlage im Rahmen F.
-function Facility.train(F, records)
+--- Streckenzug an der Ankunft der Anlage im Rahmen F: mit `attach` eine Lok vorn, sonst zwei Loks Rücken an Rücken;
+--- dahinter zwei leere Wagen.
+function Facility.train(F, records, attach)
   local a = F:stock("locomotive", ARRIVE - 2, 25)
-  wagons(F, 25, ARRIVE - 9, ARRIVE - 16, false)
+  local back = ARRIVE - 9
+  if not attach then
+    F:stock("locomotive", back, 25, true)
+    back = back - 7
+  end
+  wagons(F, 25, back, back - 7, false)
   local schedule = a.train.get_schedule()
   schedule.clear_records()
   for _, r in ipairs(records) do
