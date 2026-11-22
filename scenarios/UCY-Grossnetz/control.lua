@@ -102,8 +102,7 @@ local function setup()
   for _, F in ipairs(frames) do Facility.rails(F) end
   local mine = Facility.build(frames[1], "Erzmine", true)
   Facility.build(frames[2], "Fabrik", false)
-  local train = Facility.train(frames[1], { "Erzmine Ankunft", "Erzmine Lokwende", "Erzmine Abfahrt",
-    "Fabrik Ankunft", "Fabrik Lokwende", "Fabrik Abfahrt" })
+  local train = Facility.train(frames[1], { "Erzmine Ankunft", "Erzmine Abfahrt", "Fabrik Ankunft", "Fabrik Abfahrt" })
   remote.call("UTLCouplingYard", "scan") -- Wagen erfassen, Sperren setzen
   storage.watch = { train }
   for _, F in ipairs(frames) do
